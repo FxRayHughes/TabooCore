@@ -1,0 +1,20 @@
+{
+  "taboolib": {
+    "version": "6.2.4-local-dev",
+    "modules": []
+  },
+  "kotlin": {
+    "version": "2.3.10",
+    "coroutines": "1.10.2"
+  },
+  "repo": {
+    "central": "https://maven.aliyun.com/repository/central",
+    "taboolib": "https://repo.tabooproject.org/repository/releases",
+    "reflex": "https://repo.tabooproject.org/repository/releases"
+  },
+  "libs-dir": "libraries",
+  "dev": {
+    "enabled": true,
+    "local-repo": ""
+  }
+}
