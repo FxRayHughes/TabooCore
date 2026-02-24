@@ -3,7 +3,6 @@ package taboocore.bootstrap
 import org.spongepowered.asm.launch.MixinBootstrap as SpongeMixinBootstrap
 import org.spongepowered.asm.mixin.MixinEnvironment
 import org.spongepowered.asm.mixin.Mixins
-import org.spongepowered.asm.service.MixinService
 import taboocore.agent.TabooCoreAgent
 import taboocore.agent.PluginInfo
 import org.spongepowered.asm.mixin.extensibility.IMixinConfigSource
@@ -26,19 +25,54 @@ object MixinBootstrap {
         // TabooCore 自身的核心 Mixin 先注册
         Mixins.addConfiguration("taboocore.mixins.json", null as IMixinConfigSource?)
 
-        // 再注册各插件声明的 Mixin 配置
+        // 再注册各插件声明的 Mixin 配置（跳过空配置）
         plugins.forEach { plugin ->
             plugin.mixinConfigs.forEach { config ->
-                Mixins.addConfiguration(config, null as IMixinConfigSource?)
-                println("[TabooCore] 注册 Mixin 配置: $config")
+                // 检查配置文件是否包含有效的 mixin 类
+                val resource = Thread.currentThread().contextClassLoader?.getResourceAsStream(config)
+                if (resource != null) {
+                    val content = resource.bufferedReader().use { it.readText() }
+                    val json = com.google.gson.JsonParser.parseString(content).asJsonObject
+                    val mixins = json.getAsJsonArray("mixins")
+                    if (mixins != null && mixins.size() > 0) {
+                        Mixins.addConfiguration(config, null as IMixinConfigSource?)
+                        println("[TabooCore] 注册 Mixin 配置: $config")
+                    } else {
+                        println("[TabooCore] 跳过空 Mixin 配置: $config")
+                    }
+                } else {
+                    System.err.println("[TabooCore] 未找到 Mixin 配置: $config")
+                }
             }
         }
+
+        // 完成 Mixin 引导：从 PREINIT → INIT → DEFAULT
+        completeMixinBootstrap()
 
         // 设置为服务端环境
         MixinEnvironment.getDefaultEnvironment().side = MixinEnvironment.Side.SERVER
 
         // 将 Mixin 字节码转换器注入到 Instrumentation
         inst.addTransformer(MixinClassTransformer(), true)
+        println("[TabooCore/Mixin] ClassFileTransformer registered")
+    }
+
+    /**
+     * 通过反射将 Mixin 环境从 PREINIT 推进到 DEFAULT 阶段
+     * 只有在 DEFAULT 阶段，Mixin 才会解析配置中的 targets 并应用字节码转换
+     * 参考 Ignite: space.vectrix.ignite.launch.ember.Ember#completeMixinBootstrap
+     */
+    private fun completeMixinBootstrap() {
+        try {
+            val gotoPhase = MixinEnvironment::class.java.getDeclaredMethod("gotoPhase", MixinEnvironment.Phase::class.java)
+            gotoPhase.isAccessible = true
+            gotoPhase.invoke(null, MixinEnvironment.Phase.INIT)
+            gotoPhase.invoke(null, MixinEnvironment.Phase.DEFAULT)
+            println("[TabooCore/Mixin] phase transition complete: DEFAULT")
+        } catch (e: Exception) {
+            System.err.println("[TabooCore/Mixin] phase transition failed: ${e.message}")
+            e.printStackTrace()
+        }
     }
 
     /**
@@ -131,6 +165,8 @@ object MixinBootstrap {
     }
 
     private class MixinClassTransformer : ClassFileTransformer {
+        @Volatile private var injected = false
+
         override fun transform(
             loader: ClassLoader?,
             className: String,
@@ -138,14 +174,53 @@ object MixinBootstrap {
             protectionDomain: ProtectionDomain?,
             classfileBuffer: ByteArray
         ): ByteArray? {
+            // Minecraft bundler 创建 URLClassLoader(urls, PlatformClassLoader)，
+            // 绕过 SystemClassLoader，导致 agent JAR 上的类不可见。
+            // 首次遇到 URLClassLoader 时，通过反射将 agent JAR + 插件 JAR 注入进去。
+            if (!injected && loader is java.net.URLClassLoader) {
+                injected = true
+                injectToServerClassLoader(loader)
+            }
+            val transformer = MixinServiceTabooCore.transformer ?: return null
             val canonicalName = className.replace('/', '.')
-            return runCatching<ByteArray?> {
-                val provider = MixinService.getService().transformerProvider
-                val getTransformer = provider?.javaClass?.getMethod("getTransformer")
-                val transformer = getTransformer?.invoke(provider)
-                val transformMethod = transformer?.javaClass?.getMethod("transformClassBytes", String::class.java, String::class.java, ByteArray::class.java)
-                transformMethod?.invoke(transformer, null, canonicalName, classfileBuffer) as? ByteArray
-            }.getOrNull()
+            return try {
+                transformer.transformClassBytes(null, canonicalName, classfileBuffer)
+            } catch (e: Throwable) {
+                println("[TabooCore/Mixin] transform error: $canonicalName - ${e.javaClass.name}: ${e.message}")
+                e.printStackTrace()
+                null
+            }
+        }
+
+        private fun injectToServerClassLoader(loader: java.net.URLClassLoader) {
+            try {
+                val inst = taboocore.agent.TabooCoreAgent.instrumentation!!
+                // 打开 java.net 模块，允许反射访问 URLClassLoader.addURL
+                val javaBase = java.net.URLClassLoader::class.java.module
+                val thisModule = MixinBootstrap::class.java.module
+                inst.redefineModule(javaBase, emptySet(), emptyMap(),
+                    mapOf("java.net" to setOf(thisModule)), emptySet(), emptyMap())
+
+                val addURL = java.net.URLClassLoader::class.java.getDeclaredMethod("addURL", java.net.URL::class.java)
+                addURL.isAccessible = true
+                // 注入 agent JAR（含 Mixin 运行时 + TabooCore 类）
+                addURL.invoke(loader, taboocore.agent.TabooCoreAgent.agentJarFile.toURI().toURL())
+                // 注入 TabooLibLoader 加载的所有 JAR（TabooLib 模块、Kotlin、Reflex 等）
+                taboocore.agent.TabooCoreAgent.loadedJars.forEach {
+                    addURL.invoke(loader, it.toURI().toURL())
+                }
+                // 注入 TabooLib 运行时 JAR（libraries/ 下已下载的模块）
+                val libDir = java.io.File("libraries")
+                if (libDir.isDirectory) {
+                    libDir.walkTopDown().filter { it.extension == "jar" }.forEach {
+                        addURL.invoke(loader, it.toURI().toURL())
+                    }
+                }
+                println("[TabooCore/Mixin] injected ${taboocore.agent.TabooCoreAgent.loadedJars.size + 1} JARs into server classloader")
+            } catch (e: Exception) {
+                System.err.println("[TabooCore/Mixin] failed to inject into classloader: ${e.message}")
+                e.printStackTrace()
+            }
         }
     }
 }

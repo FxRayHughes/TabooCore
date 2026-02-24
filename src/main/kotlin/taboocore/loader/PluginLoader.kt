@@ -1,7 +1,10 @@
 package taboocore.loader
 
 import com.google.gson.Gson
-import com.google.gson.annotations.SerializedName
+import taboolib.common.event.InternalEvent
+import taboolib.common.event.InternalEventBus
+import taboolib.common.platform.Plugin
+import taboolib.common.platform.event.SubscribeEvent
 import java.io.File
 import java.net.URL
 import java.net.URLClassLoader
@@ -9,7 +12,7 @@ import java.util.jar.JarFile
 
 /**
  * 插件加载器
- * 在服务端启动完成后（由 MixinMinecraftServer 触发）扫描并加载插件
+ * 在服务端启动完成后（由 MixinDedicatedServer 触发）扫描并加载插件
  */
 object PluginLoader {
 
@@ -37,10 +40,10 @@ object PluginLoader {
             sharedLoader = SharedPluginClassLoader(sharedUrls.toTypedArray(), javaClass.classLoader)
         }
 
-        // 依次加载
+        // 依次加载并启用
         entries.forEach { (jar, meta) ->
             runCatching { load(jar, meta) }.onFailure { e ->
-                System.err.println("[TabooCore] 加载插件失败: ${jar.name} - ${e.message}")
+                System.err.println("[TabooCore] Failed to load plugin: ${jar.name} - ${e.message}")
                 e.printStackTrace()
             }
         }
@@ -52,12 +55,89 @@ object PluginLoader {
         } else {
             sharedLoader!!
         }
+        // Scan all classes in plugin JAR and register @SubscribeEvent handlers
+        injectPluginClasses(jar, loader)
+        // Instantiate and start the plugin main class
         val mainClass = loader.loadClass(meta.main)
-        val plugin = mainClass.getDeclaredConstructor().newInstance() as TabooCorePlugin
+        val constructor = mainClass.getDeclaredConstructor()
+        constructor.isAccessible = true
+        val plugin = constructor.newInstance() as Plugin
+        plugin.onLoad()
         plugin.onEnable()
         loaded += LoadedPlugin(meta, plugin, loader)
-        println("[TabooCore] 已加载插件: ${meta.name} v${meta.version}" +
-            if (meta.isolate) " (隔离)" else "")
+        println(
+            "[TabooCore] Loaded plugin: ${meta.name} v${meta.version}" +
+                if (meta.isolate) " (isolated)" else ""
+        )
+    }
+
+    /**
+     * 扫描插件 JAR 中的所有 .class 文件，
+     * 对每个有 @SubscribeEvent 且参数为 InternalEvent 子类的方法，
+     * 直接通过 InternalEventBus.listen() 注册监听器。
+     *
+     * 绕过 EventBus/ClassVisitor/Reflex 链条，避免 findInstance/optional 等环节的静默失败。
+     */
+    private fun injectPluginClasses(jar: File, loader: ClassLoader) {
+        JarFile(jar).use { jf ->
+            jf.stream()
+                .filter { it.name.endsWith(".class") && !it.name.contains('$') }
+                .forEach { entry ->
+                    val className = entry.name.replace('/', '.').removeSuffix(".class")
+                    runCatching {
+                        val clazz = Class.forName(className, true, loader)
+                        val instance = findKotlinInstance(clazz)
+
+                        for (method in clazz.declaredMethods) {
+                            val anno = method.getAnnotation(SubscribeEvent::class.java) ?: continue
+                            if (method.parameterCount == 0) continue
+                            val eventType = method.parameterTypes[0]
+                            if (!InternalEvent::class.java.isAssignableFrom(eventType)) continue
+
+                            method.isAccessible = true
+                            @Suppress("UNCHECKED_CAST")
+                            InternalEventBus.listen(
+                                eventType as Class<InternalEvent>,
+                                anno.priority.level,
+                                anno.ignoreCancelled
+                            ) { event ->
+                                if (instance != null) {
+                                    method.invoke(instance, event)
+                                } else {
+                                    method.invoke(null, event)
+                                }
+                            }
+                            println("[TabooCore]   @SubscribeEvent: ${clazz.simpleName}.${method.name}(${eventType.simpleName})")
+                        }
+                    }.onFailure { e ->
+                        System.err.println("[TabooCore] Failed to inject class: $className - ${e.message}")
+                        e.printStackTrace()
+                    }
+                }
+        }
+    }
+
+    /**
+     * 查找 Kotlin object 的 INSTANCE 单例。
+     * 对于 Kotlin `object` 声明，编译器生成静态字段 INSTANCE。
+     * 普通类返回 null（@SubscribeEvent 方法将以 invokeStatic 方式调用）。
+     */
+    private fun findKotlinInstance(clazz: Class<*>): Any? {
+        return try {
+            val field = clazz.getDeclaredField("INSTANCE")
+            field.isAccessible = true
+            field.get(null)
+        } catch (_: NoSuchFieldException) {
+            null
+        }
+    }
+
+    /**
+     * 触发所有已加载插件的 onActive 回调
+     * 在首次 tick 时调用，此时玩家可以加入游戏
+     */
+    fun activeAll() {
+        loaded.forEach { runCatching { it.plugin.onActive() } }
     }
 
     fun disableAll() {
@@ -89,7 +169,7 @@ private class SharedPluginClassLoader(
 
 private data class LoadedPlugin(
     val meta: PluginMeta,
-    val plugin: TabooCorePlugin,
+    val plugin: Plugin,
     val loader: ClassLoader
 )
 
@@ -115,8 +195,3 @@ data class PluginMeta(
     var priority: Int = 0,
     var isolate: Boolean = false
 )
-
-interface TabooCorePlugin {
-    fun onEnable() {}
-    fun onDisable() {}
-}

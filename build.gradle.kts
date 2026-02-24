@@ -5,6 +5,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 plugins {
     kotlin("jvm") version "2.3.10"
     id("com.gradleup.shadow") version "9.3.1"
+    `maven-publish`
 }
 
 group = "taboocore"
@@ -23,7 +24,13 @@ dependencies {
     implementation("com.google.code.gson:gson:2.11.0")
     implementation("com.google.guava:guava:33.4.0-jre")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
+    implementation("org.ow2.asm:asm:9.8")
+    implementation("org.ow2.asm:asm-util:9.8")
+    implementation("org.ow2.asm:asm-commons:9.8")
     implementation(kotlin("reflect"))
+    // Reflex：打包并 relocate 到 taboolib.library.reflex（与 TabooLib 运行时一致）
+    compileOnly("org.tabooproject.reflex:reflex:1.2.2")
+    compileOnly("org.tabooproject.reflex:analyser:1.2.2")
 
     // 编译时依赖（运行时由 TabooLibLoader 动态加载，不打包进 JAR）
     compileOnly("org.ow2.asm:asm:9.8")
@@ -49,8 +56,6 @@ java {
 
 tasks.withType<ShadowJar> {
     archiveClassifier.set("")
-//    relocate("org.spongepowered.asm", "taboocore.library.mixin")
-//    relocate("kotlinx.coroutines", "taboocore.library.coroutines")
     manifest {
         attributes(
             "Premain-Class" to "taboocore.agent.TabooCoreAgent",
@@ -63,4 +68,12 @@ tasks.withType<ShadowJar> {
 
 tasks.build {
     dependsOn("shadowJar")
+}
+
+publishing {
+    publications {
+        create<MavenPublication>("maven") {
+            artifact(tasks.named("shadowJar"))
+        }
+    }
 }

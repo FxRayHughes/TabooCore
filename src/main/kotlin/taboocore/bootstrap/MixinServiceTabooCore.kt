@@ -5,6 +5,8 @@ import org.objectweb.asm.tree.ClassNode
 import org.spongepowered.asm.launch.platform.container.ContainerHandleVirtual
 import org.spongepowered.asm.launch.platform.container.IContainerHandle
 import org.spongepowered.asm.mixin.MixinEnvironment
+import org.spongepowered.asm.mixin.transformer.IMixinTransformer
+import org.spongepowered.asm.mixin.transformer.IMixinTransformerFactory
 import org.spongepowered.asm.service.*
 import org.spongepowered.asm.util.ReEntranceLock
 import java.io.InputStream
@@ -24,13 +26,30 @@ class MixinServiceTabooCore :
     private val lock = ReEntranceLock(1)
     private val container = ContainerHandleVirtual("TabooCore")
 
+    companion object {
+        /** Mixin transformer 实例，供 MixinClassTransformer 使用 */
+        @JvmStatic
+        var transformer: IMixinTransformer? = null
+            private set
+
+        @JvmStatic
+        fun hasFactory(): Boolean = transformer != null
+    }
+
     // ---- IMixinService ----
 
     override fun getName(): String = "TabooCore"
     override fun isValid(): Boolean = true
     override fun prepare() {}
     override fun getInitialPhase(): MixinEnvironment.Phase = MixinEnvironment.Phase.PREINIT
-    override fun offer(internal: IMixinInternal) {}
+
+    override fun offer(internal: IMixinInternal) {
+        if (internal is IMixinTransformerFactory) {
+            transformer = internal.createTransformer()
+            println("[TabooCore/Mixin] transformer created: ${transformer!!.javaClass.name}")
+        }
+    }
+
     override fun init() {}
     override fun beginPhase() {}
     override fun checkEnv(bootSource: Any) {}
@@ -56,7 +75,6 @@ class MixinServiceTabooCore :
         MixinEnvironment.CompatibilityLevel.JAVA_8
 
     override fun getMaxCompatibilityLevel(): MixinEnvironment.CompatibilityLevel? {
-        // 返回动态注入的 JAVA_25（如果存在）
         return runCatching {
             MixinEnvironment.CompatibilityLevel.valueOf("JAVA_25")
         }.getOrNull()
@@ -88,8 +106,12 @@ class MixinServiceTabooCore :
 
     override fun getClassNode(name: String, runTransformers: Boolean, readerFlags: Int): ClassNode {
         val resourcePath = name.replace('.', '/') + ".class"
-        val bytes = ClassLoader.getSystemClassLoader().getResourceAsStream(resourcePath)?.use { it.readBytes() }
-            ?: throw ClassNotFoundException(name)
+        val stream = ClassLoader.getSystemClassLoader().getResourceAsStream(resourcePath)
+        if (stream == null) {
+            println("[TabooCore/Mixin] getClassNode FAILED: $name")
+            throw ClassNotFoundException(name)
+        }
+        val bytes = stream.use { it.readBytes() }
         val node = ClassNode()
         ClassReader(bytes).accept(node, readerFlags)
         return node

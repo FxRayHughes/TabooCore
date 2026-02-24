@@ -57,6 +57,8 @@ object TabooLibLoader {
         System.setProperty("taboolib.repo.self", config.repo.taboolib)
         System.setProperty("taboolib.repo.reflex", config.repo.reflex)
         System.setProperty("taboolib.module", config.taboolib.modules.joinToString(","))
+        // 让 ClassVisitorHandler 扫描 taboocore.* 包下的类（默认只扫描 taboolib.*）
+        System.setProperty("taboolib.group", "taboo")
         if (devEnabled) {
             System.setProperty("taboolib.dev", "true")
         }
@@ -74,10 +76,12 @@ object TabooLibLoader {
         loadReflex()
         // 4. TabooLib 核心模块（common 必须最先加载，PrimitiveSettings 在此初始化）
         loadTabooLibCore()
-        // 5. 触发 RuntimeEnv 初始化（处理各模块的 dependency.json 声明的运行时依赖）
-        initRuntimeEnv()
+        // 5. 处理各模块的 extra.properties（调用 init 方法）
+        //    这一步会触发 ClassVisitorHandler.init()、ProjectScannerKt.init()、
+        //    PlatformFactory.init()、RuntimeEnv.init() 等
+        processExtraProperties()
 
-        println("[TabooCore] TabooLib 加载完成")
+        println("[TabooCore] TabooLib loaded")
     }
 
     private fun loadBaseDeps() {
@@ -110,19 +114,42 @@ object TabooLibLoader {
     }
 
     /**
-     * 通过反射调用 RuntimeEnv.init()
-     * 该方法处理各模块 META-INF/taboolib/dependency.json 中声明的运行时依赖
-     * 由于 SKIP_KOTLIN_RELOCATE=true，它不会重新下载或重定向 Kotlin
+     * 扫描所有已加载模块 JAR 中的 META-INF/taboolib/extra.properties，
+     * 按声明调用各模块的 init 方法。
+     *
+     * 这是 PrimitiveLoader 在正常 TabooLib 启动流程中自动完成的步骤，
+     * 但 TabooCore 绕过了 PrimitiveLoader，需要手动补齐。
+     *
+     * 关键调用：
+     *   common-env:          RuntimeEnv.init()
+     *   common-util:         ClassVisitorHandler.init(), ProjectScannerKt.init()
+     *   common-platform-api: PlatformFactory.init()
      */
-    private fun initRuntimeEnv() {
-        runCatching {
-            val cl = ClassLoader.getSystemClassLoader()
-            val clazz = cl.loadClass("taboolib.common.env.RuntimeEnv")
-            val method = clazz.getDeclaredMethod("init")
-            method.isAccessible = true
-            method.invoke(null)
-        }.onFailure { e ->
-            System.err.println("[TabooCore] RuntimeEnv 初始化失败: ${e.message}")
+    private fun processExtraProperties() {
+        val cl = ClassLoader.getSystemClassLoader()
+        // Instrumentation.appendToSystemClassLoaderSearch may not make resources
+        // discoverable via ClassLoader.getResources(), so iterate the actual JAR files.
+        for (jar in TabooCoreAgent.loadedJars) {
+            runCatching {
+                JarFile(jar).use { jf ->
+                    val entry = jf.getJarEntry("META-INF/taboolib/extra.properties") ?: return@use
+                    val props = java.util.Properties()
+                    jf.getInputStream(entry).use { props.load(it) }
+                    val main = props.getProperty("main") ?: return@use
+                    val mainMethod = props.getProperty("main-method") ?: return@use
+                    for (cls in main.split(",")) {
+                        val className = "taboolib.${cls.trim()}"
+                        val clazz = Class.forName(className, true, cl)
+                        val method = clazz.getDeclaredMethod(mainMethod)
+                        method.isAccessible = true
+                        method.invoke(null)
+                        println("[TabooCore] extra.properties -> $className.$mainMethod()")
+                    }
+                }
+            }.onFailure { e ->
+                System.err.println("[TabooCore] Failed to process extra.properties from ${jar.name}: ${e.message}")
+                e.printStackTrace()
+            }
         }
     }
 
@@ -217,6 +244,7 @@ object TabooLibLoader {
         runCatching {
             TabooCoreAgent.instrumentation?.appendToSystemClassLoaderSearch(JarFile(jar))
                 ?: error("Instrumentation 未初始化")
+            TabooCoreAgent.loadedJars += jar
         }.onFailure { e ->
             System.err.println("[TabooCore] 无法加载 ${jar.name}: ${e.message}")
         }

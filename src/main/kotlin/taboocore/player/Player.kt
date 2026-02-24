@@ -19,13 +19,29 @@ import taboolib.common.util.Location
 import taboolib.common.util.Vector
 import java.net.InetSocketAddress
 import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * 原版 ServerPlayer 的 ProxyPlayer 包装
  * 高版本 MC 不混淆，直接调用 NMS API
  * 部分 private/protected 字段通过反射访问
  */
-class VanillaProxyPlayer(val handle: ServerPlayer) : ProxyPlayer {
+class Player(val handle: ServerPlayer) : ProxyPlayer {
+
+    companion object {
+
+        private val cache = ConcurrentHashMap<UUID, Player>()
+
+        /** 获取或创建缓存的 ProxyPlayer */
+        fun of(player: ServerPlayer): Player {
+            return cache.computeIfAbsent(player.uuid) { Player(player) }
+        }
+
+        /** 玩家退出时移除缓存 */
+        fun remove(player: ServerPlayer) {
+            cache.remove(player.uuid)
+        }
+    }
 
     override val origin: Any
         get() = handle
@@ -41,7 +57,7 @@ class VanillaProxyPlayer(val handle: ServerPlayer) : ProxyPlayer {
             val connField = handle.connection.javaClass.superclass.getDeclaredField("connection")
             connField.isAccessible = true
             val conn = connField.get(handle.connection) as net.minecraft.network.Connection
-            conn.getRemoteAddress() as? InetSocketAddress
+            conn.remoteAddress as? InetSocketAddress
         }.getOrNull()
 
     override val ping: Int
