@@ -8,8 +8,8 @@ TabooCore 是一个 Java Agent，让 [TabooLib](https://github.com/TabooLib/Tabo
 
 ### 环境要求
 
-- Java 21+
-- Minecraft 服务端 1.18+（bundler 格式）
+- Java 25
+- Minecraft 服务端 26.1
 
 ### 使用
 
