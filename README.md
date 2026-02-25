@@ -72,6 +72,7 @@ premain (TabooCoreAgent)
 | `util/` | 工具类（EntityUtils / ItemUtils / NbtUtils / LocationUtils / MathUtils） |
 | `reflect/` | NMS 私有字段反射工具（getPrivate / setPrivate） |
 | `scheduler/` | 全局协程 Scope（SupervisorJob + Dispatchers.Default） |
+| `world/` | 运行时世界管理（创建/加载/卸载/删除/导入/导出） |
 
 ## 插件开发
 
@@ -247,7 +248,50 @@ val lang = player.getLanguage() // "zh_cn"
 
 如果插件使用了 Mixin，还需要在 JAR Manifest 中声明 `TabooLib-Mixins` 指向 mixin 配置文件。
 
-### 9. 部署
+### 9. 世界管理系统
+
+```kotlin
+// 在 onEnable() 中初始化（读取配置、自动加载世界）
+WorldManager.initialize()
+
+// 创建新世界
+val level = WorldManager.create("myworld", WorldTemplate.NORMAL, seed = 12345L)
+
+// 加载已注册的世界
+val level = WorldManager.load("myworld")
+
+// 卸载世界（默认保存）
+WorldManager.unload("myworld")
+
+// 删除世界（卸载 + 删除磁盘文件 + 移除注册）
+WorldManager.delete("myworld")
+
+// 导入外部世界文件夹
+WorldManager.import("myworld", File("external/myworld"))
+
+// 导出世界到指定目录
+WorldManager.export("myworld", File("backup/myworld"))
+
+// 获取已加载的世界
+val level = WorldManager.getWorld("myworld")
+
+// 在 onDisable() 中保存所有世界
+WorldManager.saveAll()
+```
+
+世界配置自动持久化到服务端根目录的 `worldmanager.json`，`autoLoad = true` 的世界在下次启动时自动恢复。
+
+世界文件存储结构：
+```
+serverRoot/
+  worldmanager.json
+  worlds/
+    myworld/
+      level.dat
+      dimensions/worlds/myworld/region/
+```
+
+### 10. 部署
 
 将插件 JAR 放入服务端的 `plugins/` 目录。
 
