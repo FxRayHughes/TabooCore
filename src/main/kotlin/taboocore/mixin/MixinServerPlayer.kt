@@ -3,15 +3,18 @@ package taboocore.mixin
 import net.minecraft.core.BlockPos
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.server.level.ServerPlayer
+import net.minecraft.server.network.ServerGamePacketListenerImpl
 import net.minecraft.world.MenuProvider
 import net.minecraft.world.entity.Relative
 import net.minecraft.world.entity.player.Player
+import net.minecraft.world.inventory.AbstractContainerMenu
 import org.spongepowered.asm.mixin.Mixin
 import org.spongepowered.asm.mixin.Unique
 import org.spongepowered.asm.mixin.injection.At
 import org.spongepowered.asm.mixin.injection.Inject
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable
+import org.spongepowered.asm.mixin.injection.callback.LocalCapture
 import taboocore.event.inventory.InventoryOpenEvent
 import taboocore.event.player.*
 import java.util.OptionalInt
@@ -24,23 +27,22 @@ abstract class MixinServerPlayer {
 
     // ========== Inventory Open ==========
 
-    @Inject(method = ["openMenu"], at = [At("HEAD")], cancellable = true)
-    private fun onOpenMenuPre(provider: MenuProvider, cir: CallbackInfoReturnable<OptionalInt>) {
-        openMenuFired = false
-    }
-
     @Inject(
         method = ["openMenu"],
         at = [At(
             value = "INVOKE",
-            target = "Lnet/minecraft/server/network/ServerCommonPacketListenerImpl;send(Lnet/minecraft/network/protocol/Packet;)V",
+            target = "Lnet/minecraft/server/network/ServerGamePacketListenerImpl;send(Lnet/minecraft/network/protocol/Packet;)V",
             shift = At.Shift.BEFORE
         )],
-        cancellable = true
+        cancellable = true,
+        locals = LocalCapture.CAPTURE_FAILHARD
     )
-    private fun onOpenMenuBeforeSend(provider: MenuProvider, cir: CallbackInfoReturnable<OptionalInt>) {
-        val container = (this as Player).containerMenu
-        if (InventoryOpenEvent.firePre(this as ServerPlayer, container)) {
+    private fun onOpenMenuBeforeSend(
+        provider: MenuProvider,
+        cir: CallbackInfoReturnable<OptionalInt>,
+        menu: AbstractContainerMenu
+    ) {
+        if (InventoryOpenEvent.firePre(this as ServerPlayer, menu)) {
             cir.returnValue = OptionalInt.empty()
             return
         }
