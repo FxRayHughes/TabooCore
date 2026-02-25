@@ -5,9 +5,8 @@ import net.minecraft.server.level.ServerLevel
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.MenuProvider
 import net.minecraft.world.entity.Relative
-import net.minecraft.world.inventory.AbstractContainerMenu
+import net.minecraft.world.entity.player.Player
 import org.spongepowered.asm.mixin.Mixin
-import org.spongepowered.asm.mixin.Shadow
 import org.spongepowered.asm.mixin.Unique
 import org.spongepowered.asm.mixin.injection.At
 import org.spongepowered.asm.mixin.injection.Inject
@@ -19,12 +18,6 @@ import java.util.OptionalInt
 
 @Mixin(ServerPlayer::class)
 abstract class MixinServerPlayer {
-
-    @Shadow
-    lateinit var containerMenu: AbstractContainerMenu
-
-    @Shadow
-    var experienceLevel: Int = 0
 
     @Unique
     private var openMenuFired: Boolean = false
@@ -46,7 +39,7 @@ abstract class MixinServerPlayer {
         cancellable = true
     )
     private fun onOpenMenuBeforeSend(provider: MenuProvider, cir: CallbackInfoReturnable<OptionalInt>) {
-        val container = containerMenu
+        val container = (this as Player).containerMenu
         if (InventoryOpenEvent.firePre(this as ServerPlayer, container)) {
             cir.returnValue = OptionalInt.empty()
             return
@@ -58,7 +51,7 @@ abstract class MixinServerPlayer {
     private fun onOpenMenuPost(provider: MenuProvider, cir: CallbackInfoReturnable<OptionalInt>) {
         if (!openMenuFired) return
         openMenuFired = false
-        val container = containerMenu
+        val container = (this as Player).containerMenu
         InventoryOpenEvent.firePost(this as ServerPlayer, container)
     }
 
@@ -204,7 +197,7 @@ abstract class MixinServerPlayer {
     @Inject(method = ["setExperienceLevels"], at = [At("HEAD")], cancellable = true)
     private fun onSetExperienceLevelsPre(amount: Int, ci: CallbackInfo) {
         val player = this as ServerPlayer
-        val oldLevel = experienceLevel
+        val oldLevel = (this as Player).experienceLevel
         levelChangeOldLevel = oldLevel
         val event = PlayerLevelChangeEvent.firePre(player, oldLevel, amount)
         if (event == null) {
