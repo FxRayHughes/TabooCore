@@ -42,10 +42,11 @@ object TabooCoreAgent {
         // 1. 下载并加载 TabooLib 模块
         TabooLibLoader.init()
 
-        // 1.5 通知 ClassAppender 已加载的模块 JAR
+        // 1.5 通知 ClassAppender 已加载的模块 JAR 和 Agent JAR
         //     TabooLibLoader 使用 Instrumentation 加载模块，不会触发 ClassAppender 回调。
         //     ProjectScanner 依赖 ClassAppender 回调来发现模块中的类（如 EventBus @Awake），
         //     必须在 CONST 生命周期之前完成注册。
+        ClassAppender.addPath(agentJarFile.toPath(), false, false)
         for (jar in loadedJars) {
             runCatching { ClassAppender.addPath(jar.toPath(), false, false) }.onFailure { e ->
                 System.err.println("Failed to register ${jar.name} with ClassAppender: ${e.message}")
@@ -70,8 +71,7 @@ object TabooCoreAgent {
         // 5. 初始化 Mixin
         MixinBootstrap.init(plugins, inst)
 
-        // 6. ClassAppender
-        ClassAppender.addPath(agentJarFile.toPath(), false, false)
+        // 6. 注册插件 JAR 到 ClassAppender（agent JAR 已在 CONST 前注册）
         plugins.forEach { ClassAppender.addPath(it.jar.toPath(), false, false) }
 
         // 7. LOAD 生命周期：Mixin 注入完成，服务器尚未启动

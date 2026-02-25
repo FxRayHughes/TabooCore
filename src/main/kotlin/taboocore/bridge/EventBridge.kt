@@ -9,7 +9,6 @@ import taboocore.event.ServerTickEvent
 import taboocore.console.TabooCoreConsole
 import taboocore.internal.InternalCommands
 import taboocore.internal.TpsTracker
-import taboocore.platform.TabooCoreExecutor
 import taboocore.util.ServerUtils
 import taboocore.util.TabooCoreLogger
 import taboolib.common.LifeCycle
@@ -37,12 +36,9 @@ object EventBridge {
     fun fireServerStarted(server: MinecraftServer) {
         TabooCoreLogger.markServerStarted()
         ServerUtils.serverInstance = server
-        // 注册内置管理命令（/tps、/perf、/tbreload）
         InternalCommands.register(server)
-        // 注入 Brigadier 补全器和 JLine Log4j2 Appender
         TabooCoreConsole.setupCompleter(server)
         TabooCoreConsole.setupLog4j2Appender()
-        // ENABLE: 插件可以监听事件
         TabooLib.lifeCycle(LifeCycle.ENABLE)
         taboocore.loader.PluginLoader.loadAll()
     }
@@ -54,30 +50,14 @@ object EventBridge {
     fun fireTick() {
         if (firstTick) {
             firstTick = false
-            // ACTIVE: 首次 tick，玩家可以加入游戏
             taboocore.loader.PluginLoader.activeAll()
             TabooLib.lifeCycle(LifeCycle.ACTIVE)
         }
         TpsTracker.record()
-        drainSyncQueue()
         ServerTickEvent(++tickCount).call()
     }
 
     fun fireServerStopping() {
         TabooLib.lifeCycle(LifeCycle.DISABLE)
     }
-
-    @Suppress("UNCHECKED_CAST")
-    private fun drainSyncQueue() {
-        val executor = TabooCoreExecutor.instance ?: return
-        synchronized(executor.syncQueue) {
-            val iter = executor.syncQueue.iterator()
-            while (iter.hasNext()) {
-                val (runnable, task) = iter.next()
-                iter.remove()
-                runnable.executor(task)
-            }
-        }
-    }
 }
-
