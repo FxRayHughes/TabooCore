@@ -3,7 +3,7 @@ package taboocore.event.world
 import net.minecraft.core.BlockPos
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.server.level.ServerPlayer
-import taboocore.player.Player
+import taboocore.player.TabooCorePlayer
 import taboolib.common.event.CancelableInternalEvent
 import taboolib.common.event.InternalEvent
 
@@ -22,7 +22,7 @@ class SignChangeEvent {
      * @property isFront 是否为正面
      */
     class Pre(
-        val player: Player,
+        val player: TabooCorePlayer,
         val level: ServerLevel,
         val pos: BlockPos,
         var lines: Array<String>,
@@ -39,7 +39,7 @@ class SignChangeEvent {
      * @property isFront 是否为正面
      */
     class Post(
-        val player: Player,
+        val player: TabooCorePlayer,
         val level: ServerLevel,
         val pos: BlockPos,
         val lines: Array<String>,
@@ -51,7 +51,7 @@ class SignChangeEvent {
          * 告示牌编辑前触发，返回事件对象（可读取修改后的 lines），返回 null 表示事件被取消
          */
         fun firePre(serverPlayer: ServerPlayer, level: ServerLevel, pos: BlockPos, lines: Array<String>, isFront: Boolean): Pre? {
-            val event = Pre(Player.of(serverPlayer), level, pos, lines, isFront)
+            val event = Pre(TabooCorePlayer.of(serverPlayer), level, pos, lines, isFront)
             event.call()
             return if (event.isCancelled) null else event
         }
@@ -60,7 +60,7 @@ class SignChangeEvent {
          * 告示牌编辑后触发
          */
         fun firePost(serverPlayer: ServerPlayer, level: ServerLevel, pos: BlockPos, lines: Array<String>, isFront: Boolean) {
-            Post(Player.of(serverPlayer), level, pos, lines, isFront).call()
+            Post(TabooCorePlayer.of(serverPlayer), level, pos, lines, isFront).call()
         }
     }
 }

@@ -1,7 +1,7 @@
 package taboocore.event.player
 
 import net.minecraft.server.level.ServerPlayer
-import taboocore.player.Player
+import taboocore.player.TabooCorePlayer
 import taboolib.common.event.CancelableInternalEvent
 import taboolib.common.event.InternalEvent
 
@@ -22,7 +22,7 @@ class PlayerMoveEvent {
      * @property toZ 移动后 Z 坐标
      */
     class Pre(
-        val player: Player,
+        val player: TabooCorePlayer,
         val fromX: Double,
         val fromY: Double,
         val fromZ: Double,
@@ -43,7 +43,7 @@ class PlayerMoveEvent {
      * @property toZ 移动后 Z 坐标
      */
     class Post(
-        val player: Player,
+        val player: TabooCorePlayer,
         val fromX: Double,
         val fromY: Double,
         val fromZ: Double,
@@ -61,7 +61,7 @@ class PlayerMoveEvent {
             fromX: Double, fromY: Double, fromZ: Double,
             toX: Double, toY: Double, toZ: Double
         ): Boolean {
-            val event = Pre(Player.of(player), fromX, fromY, fromZ, toX, toY, toZ)
+            val event = Pre(TabooCorePlayer.of(player), fromX, fromY, fromZ, toX, toY, toZ)
             event.call()
             return event.isCancelled
         }
@@ -74,7 +74,7 @@ class PlayerMoveEvent {
             fromX: Double, fromY: Double, fromZ: Double,
             toX: Double, toY: Double, toZ: Double
         ) {
-            Post(Player.of(player), fromX, fromY, fromZ, toX, toY, toZ).call()
+            Post(TabooCorePlayer.of(player), fromX, fromY, fromZ, toX, toY, toZ).call()
         }
     }
 }

@@ -2,7 +2,7 @@ package taboocore.event.vehicle
 
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.entity.Entity
-import taboocore.player.Player
+import taboocore.player.TabooCorePlayer
 import taboolib.common.event.CancelableInternalEvent
 import taboolib.common.event.InternalEvent
 
@@ -21,7 +21,7 @@ class VehicleExitEvent {
     class Pre(
         val vehicle: Entity,
         val passenger: Entity,
-        val player: Player?
+        val player: TabooCorePlayer?
     ) : CancelableInternalEvent()
 
     /**
@@ -34,7 +34,7 @@ class VehicleExitEvent {
     class Post(
         val vehicle: Entity,
         val passenger: Entity,
-        val player: Player?
+        val player: TabooCorePlayer?
     ) : InternalEvent()
 
     companion object {
@@ -42,7 +42,7 @@ class VehicleExitEvent {
          * 实体离开载具前触发，返回 true 表示事件被取消
          */
         fun firePre(passenger: Entity, vehicle: Entity): Boolean {
-            val player = if (passenger is ServerPlayer) Player.of(passenger) else null
+            val player = if (passenger is ServerPlayer) TabooCorePlayer.of(passenger) else null
             val event = Pre(vehicle, passenger, player)
             event.call()
             return event.isCancelled
@@ -52,7 +52,7 @@ class VehicleExitEvent {
          * 实体离开载具后触发
          */
         fun firePost(passenger: Entity, vehicle: Entity) {
-            val player = if (passenger is ServerPlayer) Player.of(passenger) else null
+            val player = if (passenger is ServerPlayer) TabooCorePlayer.of(passenger) else null
             Post(vehicle, passenger, player).call()
         }
     }

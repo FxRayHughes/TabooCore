@@ -19,7 +19,7 @@ class EntityEnterLoveModeEvent {
      */
     class Pre(
         val entity: Animal,
-        val humanTrigger: taboocore.player.Player?
+        val humanTrigger: taboocore.player.TabooCorePlayer?
     ) : CancelableInternalEvent()
 
     /**
@@ -30,7 +30,7 @@ class EntityEnterLoveModeEvent {
      */
     class Post(
         val entity: Animal,
-        val humanTrigger: taboocore.player.Player?
+        val humanTrigger: taboocore.player.TabooCorePlayer?
     ) : InternalEvent()
 
     companion object {
@@ -38,7 +38,7 @@ class EntityEnterLoveModeEvent {
          * 实体进入恋爱模式前触发，返回 true 表示事件被取消
          */
         fun firePre(entity: Animal, player: Player?): Boolean {
-            val proxyPlayer = if (player is ServerPlayer) taboocore.player.Player.of(player) else null
+            val proxyPlayer = if (player is ServerPlayer) taboocore.player.TabooCorePlayer.of(player) else null
             val event = Pre(entity, proxyPlayer)
             event.call()
             return event.isCancelled
@@ -48,7 +48,7 @@ class EntityEnterLoveModeEvent {
          * 实体进入恋爱模式后触发
          */
         fun firePost(entity: Animal, player: Player?) {
-            val proxyPlayer = if (player is ServerPlayer) taboocore.player.Player.of(player) else null
+            val proxyPlayer = if (player is ServerPlayer) taboocore.player.TabooCorePlayer.of(player) else null
             Post(entity, proxyPlayer).call()
         }
     }

@@ -2,7 +2,7 @@ package taboocore.bridge
 
 import net.minecraft.server.MinecraftServer
 import net.minecraft.server.level.ServerPlayer
-import taboocore.player.Player
+import taboocore.player.TabooCorePlayer
 import taboocore.event.PlayerJoinEvent
 import taboocore.event.PlayerQuitEvent
 import taboocore.event.ServerTickEvent
@@ -19,12 +19,12 @@ object EventBridge {
     private var firstTick = true
 
     fun firePlayerJoin(player: ServerPlayer) {
-        PlayerJoinEvent(Player.of(player)).call()
+        PlayerJoinEvent(TabooCorePlayer.of(player)).call()
     }
 
     fun firePlayerQuit(player: ServerPlayer) {
-        PlayerQuitEvent(Player.of(player)).call()
-        Player.remove(player)
+        PlayerQuitEvent(TabooCorePlayer.of(player)).call()
+        TabooCorePlayer.remove(player)
     }
 
     private var tickCount = 0

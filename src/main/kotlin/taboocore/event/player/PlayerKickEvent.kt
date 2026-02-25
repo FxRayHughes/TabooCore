@@ -2,7 +2,7 @@ package taboocore.event.player
 
 import net.minecraft.network.chat.Component
 import net.minecraft.server.level.ServerPlayer
-import taboocore.player.Player
+import taboocore.player.TabooCorePlayer
 import taboolib.common.event.CancelableInternalEvent
 import taboolib.common.event.InternalEvent
 
@@ -18,7 +18,7 @@ class PlayerKickEvent {
      * @property reason 踢出原因（可修改）
      */
     class Pre(
-        val player: Player,
+        val player: TabooCorePlayer,
         var reason: Component
     ) : CancelableInternalEvent()
 
@@ -29,7 +29,7 @@ class PlayerKickEvent {
      * @property reason 踢出原因
      */
     class Post(
-        val player: Player,
+        val player: TabooCorePlayer,
         val reason: Component
     ) : InternalEvent()
 
@@ -38,7 +38,7 @@ class PlayerKickEvent {
          * 玩家被踢出前触发，返回事件对象，null 表示事件被取消
          */
         fun firePre(player: ServerPlayer, reason: Component): Pre? {
-            val event = Pre(Player.of(player), reason)
+            val event = Pre(TabooCorePlayer.of(player), reason)
             event.call()
             return if (event.isCancelled) null else event
         }
@@ -47,7 +47,7 @@ class PlayerKickEvent {
          * 玩家被踢出后触发
          */
         fun firePost(player: ServerPlayer, reason: Component) {
-            Post(Player.of(player), reason).call()
+            Post(TabooCorePlayer.of(player), reason).call()
         }
     }
 }

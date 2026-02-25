@@ -2,7 +2,7 @@ package taboocore.event.player
 
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.server.level.ServerPlayer
-import taboocore.player.Player
+import taboocore.player.TabooCorePlayer
 import taboolib.common.event.CancelableInternalEvent
 import taboolib.common.event.InternalEvent
 
@@ -25,7 +25,7 @@ class PlayerTeleportEvent {
      * @property toZ 传送目标 Z 坐标
      */
     class Pre(
-        val player: Player,
+        val player: TabooCorePlayer,
         val fromLevel: ServerLevel,
         val fromX: Double,
         val fromY: Double,
@@ -50,7 +50,7 @@ class PlayerTeleportEvent {
      * @property toZ 传送目标 Z 坐标
      */
     class Post(
-        val player: Player,
+        val player: TabooCorePlayer,
         val fromLevel: ServerLevel,
         val fromX: Double,
         val fromY: Double,
@@ -70,7 +70,7 @@ class PlayerTeleportEvent {
             fromLevel: ServerLevel, fromX: Double, fromY: Double, fromZ: Double,
             toLevel: ServerLevel, toX: Double, toY: Double, toZ: Double
         ): Pre? {
-            val event = Pre(Player.of(player), fromLevel, fromX, fromY, fromZ, toLevel, toX, toY, toZ)
+            val event = Pre(TabooCorePlayer.of(player), fromLevel, fromX, fromY, fromZ, toLevel, toX, toY, toZ)
             event.call()
             return if (event.isCancelled) null else event
         }
@@ -83,7 +83,7 @@ class PlayerTeleportEvent {
             fromLevel: ServerLevel, fromX: Double, fromY: Double, fromZ: Double,
             toLevel: ServerLevel, toX: Double, toY: Double, toZ: Double
         ) {
-            Post(Player.of(player), fromLevel, fromX, fromY, fromZ, toLevel, toX, toY, toZ).call()
+            Post(TabooCorePlayer.of(player), fromLevel, fromX, fromY, fromZ, toLevel, toX, toY, toZ).call()
         }
     }
 }

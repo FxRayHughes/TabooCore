@@ -2,7 +2,7 @@ package taboocore.event.player
 
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.entity.item.ItemEntity
-import taboocore.player.Player
+import taboocore.player.TabooCorePlayer
 import taboolib.common.event.CancelableInternalEvent
 import taboolib.common.event.InternalEvent
 
@@ -18,7 +18,7 @@ class PlayerPickupItemEvent {
      * @property itemEntity 被拾取的物品实体
      */
     class Pre(
-        val player: Player,
+        val player: TabooCorePlayer,
         val itemEntity: ItemEntity
     ) : CancelableInternalEvent()
 
@@ -29,7 +29,7 @@ class PlayerPickupItemEvent {
      * @property itemEntity 被拾取的物品实体
      */
     class Post(
-        val player: Player,
+        val player: TabooCorePlayer,
         val itemEntity: ItemEntity
     ) : InternalEvent()
 
@@ -38,7 +38,7 @@ class PlayerPickupItemEvent {
          * 玩家拾取物品前触发，返回 true 表示事件被取消
          */
         fun firePre(player: ServerPlayer, itemEntity: ItemEntity): Boolean {
-            val event = Pre(Player.of(player), itemEntity)
+            val event = Pre(TabooCorePlayer.of(player), itemEntity)
             event.call()
             return event.isCancelled
         }
@@ -47,7 +47,7 @@ class PlayerPickupItemEvent {
          * 玩家拾取物品后触发
          */
         fun firePost(player: ServerPlayer, itemEntity: ItemEntity) {
-            Post(Player.of(player), itemEntity).call()
+            Post(TabooCorePlayer.of(player), itemEntity).call()
         }
     }
 }

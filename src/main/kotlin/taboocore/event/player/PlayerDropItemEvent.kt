@@ -2,7 +2,7 @@ package taboocore.event.player
 
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.item.ItemStack
-import taboocore.player.Player
+import taboocore.player.TabooCorePlayer
 import taboolib.common.event.CancelableInternalEvent
 import taboolib.common.event.InternalEvent
 
@@ -19,7 +19,7 @@ class PlayerDropItemEvent {
      * @property dropAll 是否丢弃整组物品
      */
     class Pre(
-        val player: Player,
+        val player: TabooCorePlayer,
         val item: ItemStack,
         val dropAll: Boolean
     ) : CancelableInternalEvent()
@@ -32,7 +32,7 @@ class PlayerDropItemEvent {
      * @property dropAll 是否丢弃整组物品
      */
     class Post(
-        val player: Player,
+        val player: TabooCorePlayer,
         val item: ItemStack,
         val dropAll: Boolean
     ) : InternalEvent()
@@ -42,7 +42,7 @@ class PlayerDropItemEvent {
          * 玩家丢弃物品前触发，返回 true 表示事件被取消
          */
         fun firePre(player: ServerPlayer, item: ItemStack, dropAll: Boolean): Boolean {
-            val event = Pre(Player.of(player), item, dropAll)
+            val event = Pre(TabooCorePlayer.of(player), item, dropAll)
             event.call()
             return event.isCancelled
         }
@@ -51,7 +51,7 @@ class PlayerDropItemEvent {
          * 玩家丢弃物品后触发
          */
         fun firePost(player: ServerPlayer, item: ItemStack, dropAll: Boolean) {
-            Post(Player.of(player), item, dropAll).call()
+            Post(TabooCorePlayer.of(player), item, dropAll).call()
         }
     }
 }

@@ -2,7 +2,7 @@ package taboocore.event.player
 
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.server.level.ServerPlayer
-import taboocore.player.Player
+import taboocore.player.TabooCorePlayer
 import taboolib.common.event.InternalEvent
 
 /**
@@ -18,7 +18,7 @@ class PlayerChangedWorldEvent {
      * @property toLevel 目标世界
      */
     class Post(
-        val player: Player,
+        val player: TabooCorePlayer,
         val fromLevel: ServerLevel,
         val toLevel: ServerLevel
     ) : InternalEvent()
@@ -28,7 +28,7 @@ class PlayerChangedWorldEvent {
          * 玩家切换世界后触发
          */
         fun firePost(player: ServerPlayer, fromLevel: ServerLevel, toLevel: ServerLevel) {
-            Post(Player.of(player), fromLevel, toLevel).call()
+            Post(TabooCorePlayer.of(player), fromLevel, toLevel).call()
         }
     }
 }

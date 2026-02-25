@@ -4,7 +4,7 @@ import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.InteractionHand
 import net.minecraft.world.entity.EquipmentSlot
 import net.minecraft.world.entity.decoration.ArmorStand
-import taboocore.player.Player
+import taboocore.player.TabooCorePlayer
 import taboolib.common.event.CancelableInternalEvent
 import taboolib.common.event.InternalEvent
 
@@ -22,7 +22,7 @@ class PlayerArmorStandManipulateEvent {
      * @property slot 操作的装备槽位
      */
     class Pre(
-        val player: Player,
+        val player: TabooCorePlayer,
         val armorStand: ArmorStand,
         val hand: InteractionHand,
         val slot: EquipmentSlot
@@ -37,7 +37,7 @@ class PlayerArmorStandManipulateEvent {
      * @property slot 操作的装备槽位
      */
     class Post(
-        val player: Player,
+        val player: TabooCorePlayer,
         val armorStand: ArmorStand,
         val hand: InteractionHand,
         val slot: EquipmentSlot
@@ -48,7 +48,7 @@ class PlayerArmorStandManipulateEvent {
          * 玩家操作盔甲架前触发，返回 true 表示事件被取消
          */
         fun firePre(player: ServerPlayer, armorStand: ArmorStand, hand: InteractionHand, slot: EquipmentSlot): Boolean {
-            val event = Pre(Player.of(player), armorStand, hand, slot)
+            val event = Pre(TabooCorePlayer.of(player), armorStand, hand, slot)
             event.call()
             return event.isCancelled
         }
@@ -57,7 +57,7 @@ class PlayerArmorStandManipulateEvent {
          * 玩家操作盔甲架后触发
          */
         fun firePost(player: ServerPlayer, armorStand: ArmorStand, hand: InteractionHand, slot: EquipmentSlot) {
-            Post(Player.of(player), armorStand, hand, slot).call()
+            Post(TabooCorePlayer.of(player), armorStand, hand, slot).call()
         }
     }
 }

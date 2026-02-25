@@ -2,7 +2,7 @@ package taboocore.event.player
 
 import net.minecraft.advancements.AdvancementHolder
 import net.minecraft.server.level.ServerPlayer
-import taboocore.player.Player
+import taboocore.player.TabooCorePlayer
 import taboolib.common.event.CancelableInternalEvent
 import taboolib.common.event.InternalEvent
 
@@ -19,7 +19,7 @@ class PlayerAdvancementDoneEvent {
      * @property criterion 达成的进度条件名
      */
     class Pre(
-        val player: Player,
+        val player: TabooCorePlayer,
         val advancement: AdvancementHolder,
         val criterion: String
     ) : CancelableInternalEvent()
@@ -32,7 +32,7 @@ class PlayerAdvancementDoneEvent {
      * @property criterion 达成的进度条件名
      */
     class Post(
-        val player: Player,
+        val player: TabooCorePlayer,
         val advancement: AdvancementHolder,
         val criterion: String
     ) : InternalEvent()
@@ -42,7 +42,7 @@ class PlayerAdvancementDoneEvent {
          * 玩家完成进度前触发，返回事件对象，null 表示事件被取消
          */
         fun firePre(player: ServerPlayer, advancement: AdvancementHolder, criterion: String): Pre? {
-            val event = Pre(Player.of(player), advancement, criterion)
+            val event = Pre(TabooCorePlayer.of(player), advancement, criterion)
             event.call()
             return if (event.isCancelled) null else event
         }
@@ -51,7 +51,7 @@ class PlayerAdvancementDoneEvent {
          * 玩家完成进度后触发
          */
         fun firePost(player: ServerPlayer, advancement: AdvancementHolder, criterion: String) {
-            Post(Player.of(player), advancement, criterion).call()
+            Post(TabooCorePlayer.of(player), advancement, criterion).call()
         }
     }
 }

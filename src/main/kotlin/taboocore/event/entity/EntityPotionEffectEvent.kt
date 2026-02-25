@@ -4,7 +4,7 @@ import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.effect.MobEffectInstance
 import net.minecraft.world.entity.Entity
 import net.minecraft.world.entity.LivingEntity
-import taboocore.player.Player
+import taboocore.player.TabooCorePlayer
 import taboolib.common.event.CancelableInternalEvent
 import taboolib.common.event.InternalEvent
 
@@ -38,7 +38,7 @@ class EntityPotionEffectEvent {
      */
     class Pre(
         val entity: LivingEntity,
-        val player: Player?,
+        val player: TabooCorePlayer?,
         var effect: MobEffectInstance?,
         val source: Entity?,
         val action: Action
@@ -55,7 +55,7 @@ class EntityPotionEffectEvent {
      */
     class Post(
         val entity: LivingEntity,
-        val player: Player?,
+        val player: TabooCorePlayer?,
         val effect: MobEffectInstance?,
         val source: Entity?,
         val action: Action
@@ -66,7 +66,7 @@ class EntityPotionEffectEvent {
          * 实体药水效果变更前触发，返回事件对象（可能已被修改），返回 null 表示事件被取消
          */
         fun firePre(entity: LivingEntity, effect: MobEffectInstance?, source: Entity?, action: Action): Pre? {
-            val player = if (entity is ServerPlayer) Player.of(entity) else null
+            val player = if (entity is ServerPlayer) TabooCorePlayer.of(entity) else null
             val event = Pre(entity, player, effect, source, action)
             event.call()
             return if (event.isCancelled) null else event
@@ -76,7 +76,7 @@ class EntityPotionEffectEvent {
          * 实体药水效果变更后触发
          */
         fun firePost(entity: LivingEntity, effect: MobEffectInstance?, source: Entity?, action: Action) {
-            val player = if (entity is ServerPlayer) Player.of(entity) else null
+            val player = if (entity is ServerPlayer) TabooCorePlayer.of(entity) else null
             Post(entity, player, effect, source, action).call()
         }
     }

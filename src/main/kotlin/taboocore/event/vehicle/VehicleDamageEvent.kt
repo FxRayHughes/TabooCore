@@ -5,7 +5,7 @@ import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.damagesource.DamageSource
 import net.minecraft.world.entity.Entity
 import net.minecraft.world.entity.vehicle.VehicleEntity
-import taboocore.player.Player
+import taboocore.player.TabooCorePlayer
 import taboolib.common.event.CancelableInternalEvent
 import taboolib.common.event.InternalEvent
 
@@ -26,7 +26,7 @@ class VehicleDamageEvent {
     class Pre(
         val vehicle: VehicleEntity,
         val attacker: Entity?,
-        val player: Player?,
+        val player: TabooCorePlayer?,
         var damage: Float,
         val damageSource: DamageSource
     ) : CancelableInternalEvent()
@@ -43,7 +43,7 @@ class VehicleDamageEvent {
     class Post(
         val vehicle: VehicleEntity,
         val attacker: Entity?,
-        val player: Player?,
+        val player: TabooCorePlayer?,
         val damage: Float,
         val damageSource: DamageSource
     ) : InternalEvent()
@@ -54,7 +54,7 @@ class VehicleDamageEvent {
          */
         fun firePre(vehicle: VehicleEntity, level: ServerLevel, source: DamageSource, damage: Float): Pre? {
             val attacker = source.entity
-            val player = if (attacker is ServerPlayer) Player.of(attacker) else null
+            val player = if (attacker is ServerPlayer) TabooCorePlayer.of(attacker) else null
             val event = Pre(vehicle, attacker, player, damage, source)
             event.call()
             return if (event.isCancelled) null else event
@@ -65,7 +65,7 @@ class VehicleDamageEvent {
          */
         fun firePost(vehicle: VehicleEntity, level: ServerLevel, source: DamageSource, damage: Float) {
             val attacker = source.entity
-            val player = if (attacker is ServerPlayer) Player.of(attacker) else null
+            val player = if (attacker is ServerPlayer) TabooCorePlayer.of(attacker) else null
             Post(vehicle, attacker, player, damage, source).call()
         }
     }

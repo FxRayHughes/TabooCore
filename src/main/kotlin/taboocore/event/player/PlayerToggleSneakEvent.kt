@@ -1,7 +1,7 @@
 package taboocore.event.player
 
 import net.minecraft.server.level.ServerPlayer
-import taboocore.player.Player
+import taboocore.player.TabooCorePlayer
 import taboolib.common.event.CancelableInternalEvent
 import taboolib.common.event.InternalEvent
 
@@ -17,7 +17,7 @@ class PlayerToggleSneakEvent {
      * @property isSneaking 是否正在潜行
      */
     class Pre(
-        val player: Player,
+        val player: TabooCorePlayer,
         val isSneaking: Boolean
     ) : CancelableInternalEvent()
 
@@ -28,7 +28,7 @@ class PlayerToggleSneakEvent {
      * @property isSneaking 是否正在潜行
      */
     class Post(
-        val player: Player,
+        val player: TabooCorePlayer,
         val isSneaking: Boolean
     ) : InternalEvent()
 
@@ -37,7 +37,7 @@ class PlayerToggleSneakEvent {
          * 玩家切换潜行状态前触发，返回 true 表示事件被取消
          */
         fun firePre(player: ServerPlayer, isSneaking: Boolean): Boolean {
-            val event = Pre(Player.of(player), isSneaking)
+            val event = Pre(TabooCorePlayer.of(player), isSneaking)
             event.call()
             return event.isCancelled
         }
@@ -46,7 +46,7 @@ class PlayerToggleSneakEvent {
          * 玩家切换潜行状态后触发
          */
         fun firePost(player: ServerPlayer, isSneaking: Boolean) {
-            Post(Player.of(player), isSneaking).call()
+            Post(TabooCorePlayer.of(player), isSneaking).call()
         }
     }
 }

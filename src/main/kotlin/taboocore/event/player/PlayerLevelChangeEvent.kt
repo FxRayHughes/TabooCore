@@ -1,7 +1,7 @@
 package taboocore.event.player
 
 import net.minecraft.server.level.ServerPlayer
-import taboocore.player.Player
+import taboocore.player.TabooCorePlayer
 import taboolib.common.event.CancelableInternalEvent
 import taboolib.common.event.InternalEvent
 
@@ -18,7 +18,7 @@ class PlayerLevelChangeEvent {
      * @property newLevel 变化后的等级（可被修改）
      */
     class Pre(
-        val player: Player,
+        val player: TabooCorePlayer,
         val oldLevel: Int,
         var newLevel: Int
     ) : CancelableInternalEvent()
@@ -31,7 +31,7 @@ class PlayerLevelChangeEvent {
      * @property newLevel 变化后的等级
      */
     class Post(
-        val player: Player,
+        val player: TabooCorePlayer,
         val oldLevel: Int,
         val newLevel: Int
     ) : InternalEvent()
@@ -41,7 +41,7 @@ class PlayerLevelChangeEvent {
          * 玩家经验等级变化前触发，返回事件对象，null 表示事件被取消
          */
         fun firePre(player: ServerPlayer, oldLevel: Int, newLevel: Int): Pre? {
-            val event = Pre(Player.of(player), oldLevel, newLevel)
+            val event = Pre(TabooCorePlayer.of(player), oldLevel, newLevel)
             event.call()
             return if (event.isCancelled) null else event
         }
@@ -50,7 +50,7 @@ class PlayerLevelChangeEvent {
          * 玩家经验等级变化后触发
          */
         fun firePost(player: ServerPlayer, oldLevel: Int, newLevel: Int) {
-            Post(Player.of(player), oldLevel, newLevel).call()
+            Post(TabooCorePlayer.of(player), oldLevel, newLevel).call()
         }
     }
 }

@@ -4,7 +4,7 @@ import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.inventory.AbstractContainerMenu
 import net.minecraft.world.inventory.ContainerInput
 import net.minecraft.world.item.ItemStack
-import taboocore.player.Player
+import taboocore.player.TabooCorePlayer
 import taboolib.common.event.CancelableInternalEvent
 import taboolib.common.event.InternalEvent
 
@@ -25,7 +25,7 @@ class InventoryClickEvent {
      * @property container 被点击的容器菜单
      */
     class Pre(
-        val player: Player,
+        val player: TabooCorePlayer,
         val containerId: Int,
         var slotIndex: Int,
         var buttonNum: Int,
@@ -46,7 +46,7 @@ class InventoryClickEvent {
      * @property container 被点击的容器菜单
      */
     class Post(
-        val player: Player,
+        val player: TabooCorePlayer,
         val containerId: Int,
         val slotIndex: Int,
         val buttonNum: Int,
@@ -68,7 +68,7 @@ class InventoryClickEvent {
             carriedItem: ItemStack,
             container: AbstractContainerMenu
         ): Pre? {
-            val event = Pre(Player.of(player), containerId, slotIndex, buttonNum, containerInput, carriedItem, container)
+            val event = Pre(TabooCorePlayer.of(player), containerId, slotIndex, buttonNum, containerInput, carriedItem, container)
             event.call()
             return if (event.isCancelled) null else event
         }
@@ -85,7 +85,7 @@ class InventoryClickEvent {
             carriedItem: ItemStack,
             container: AbstractContainerMenu
         ) {
-            Post(Player.of(player), containerId, slotIndex, buttonNum, containerInput, carriedItem, container).call()
+            Post(TabooCorePlayer.of(player), containerId, slotIndex, buttonNum, containerInput, carriedItem, container).call()
         }
     }
 }

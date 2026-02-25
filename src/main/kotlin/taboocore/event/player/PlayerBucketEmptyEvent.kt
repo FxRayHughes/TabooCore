@@ -5,7 +5,7 @@ import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.InteractionHand
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.level.block.state.BlockState
-import taboocore.player.Player
+import taboocore.player.TabooCorePlayer
 import taboolib.common.event.CancelableInternalEvent
 import taboolib.common.event.InternalEvent
 
@@ -24,7 +24,7 @@ class PlayerBucketEmptyEvent {
      * @property item 使用的桶物品
      */
     class Pre(
-        val player: Player,
+        val player: TabooCorePlayer,
         val hand: InteractionHand,
         val blockPos: BlockPos,
         var block: BlockState,
@@ -41,7 +41,7 @@ class PlayerBucketEmptyEvent {
      * @property item 使用的桶物品
      */
     class Post(
-        val player: Player,
+        val player: TabooCorePlayer,
         val hand: InteractionHand,
         val blockPos: BlockPos,
         val block: BlockState,
@@ -53,7 +53,7 @@ class PlayerBucketEmptyEvent {
          * 玩家使用桶倒出液体前触发，返回事件对象，null 表示事件被取消
          */
         fun firePre(player: ServerPlayer, hand: InteractionHand, blockPos: BlockPos, block: BlockState, item: ItemStack): Pre? {
-            val event = Pre(Player.of(player), hand, blockPos, block, item)
+            val event = Pre(TabooCorePlayer.of(player), hand, blockPos, block, item)
             event.call()
             return if (event.isCancelled) null else event
         }
@@ -62,7 +62,7 @@ class PlayerBucketEmptyEvent {
          * 玩家使用桶倒出液体后触发
          */
         fun firePost(player: ServerPlayer, hand: InteractionHand, blockPos: BlockPos, block: BlockState, item: ItemStack) {
-            Post(Player.of(player), hand, blockPos, block, item).call()
+            Post(TabooCorePlayer.of(player), hand, blockPos, block, item).call()
         }
     }
 }

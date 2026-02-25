@@ -1,7 +1,7 @@
 package taboocore.event.player
 
 import net.minecraft.server.level.ServerPlayer
-import taboocore.player.Player
+import taboocore.player.TabooCorePlayer
 import taboolib.common.event.CancelableInternalEvent
 import taboolib.common.event.InternalEvent
 
@@ -17,7 +17,7 @@ class PlayerChatEvent {
      * @property message 聊天消息内容
      */
     class Pre(
-        val player: Player,
+        val player: TabooCorePlayer,
         val message: String
     ) : CancelableInternalEvent()
 
@@ -28,7 +28,7 @@ class PlayerChatEvent {
      * @property message 聊天消息内容
      */
     class Post(
-        val player: Player,
+        val player: TabooCorePlayer,
         val message: String
     ) : InternalEvent()
 
@@ -37,7 +37,7 @@ class PlayerChatEvent {
          * 玩家聊天前触发，返回 true 表示事件被取消
          */
         fun firePre(player: ServerPlayer, message: String): Boolean {
-            val event = Pre(Player.of(player), message)
+            val event = Pre(TabooCorePlayer.of(player), message)
             event.call()
             return event.isCancelled
         }
@@ -46,7 +46,7 @@ class PlayerChatEvent {
          * 玩家聊天后触发
          */
         fun firePost(player: ServerPlayer, message: String) {
-            Post(Player.of(player), message).call()
+            Post(TabooCorePlayer.of(player), message).call()
         }
     }
 }

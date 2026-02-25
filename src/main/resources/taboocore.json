@@ -1,7 +1,11 @@
 {
   "taboolib": {
     "version": "6.2.4-local-dev",
-    "modules": []
+    "modules": [
+      "common-reflex",
+      "basic-configuration",
+      "minecraft-command-helper"
+    ]
   },
   "kotlin": {
     "version": "2.3.10",

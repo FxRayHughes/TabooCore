@@ -3,7 +3,7 @@ package taboocore.event.world
 import net.minecraft.core.BlockPos
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.level.block.state.BlockState
-import taboocore.player.Player
+import taboocore.player.TabooCorePlayer
 import taboolib.common.event.CancelableInternalEvent
 import taboolib.common.event.InternalEvent
 
@@ -22,7 +22,7 @@ class BlockPlaceEvent {
      * @property z 方块 Z 坐标
      */
     class Pre(
-        val player: Player,
+        val player: TabooCorePlayer,
         val block: BlockState,
         val x: Int,
         val y: Int,
@@ -39,7 +39,7 @@ class BlockPlaceEvent {
      * @property z 方块 Z 坐标
      */
     class Post(
-        val player: Player,
+        val player: TabooCorePlayer,
         val block: BlockState,
         val x: Int,
         val y: Int,
@@ -51,7 +51,7 @@ class BlockPlaceEvent {
          * 方块放置前触发，返回 true 表示事件被取消
          */
         fun fireBlockPlacePre(player: ServerPlayer, pos: BlockPos, state: BlockState): Boolean {
-            val event = Pre(Player.of(player), state, pos.x, pos.y, pos.z)
+            val event = Pre(TabooCorePlayer.of(player), state, pos.x, pos.y, pos.z)
             event.call()
             return event.isCancelled
         }
@@ -60,7 +60,7 @@ class BlockPlaceEvent {
          * 方块放置后触发
          */
         fun fireBlockPlacePost(player: ServerPlayer, pos: BlockPos, state: BlockState) {
-            Post(Player.of(player), state, pos.x, pos.y, pos.z).call()
+            Post(TabooCorePlayer.of(player), state, pos.x, pos.y, pos.z).call()
         }
     }
 }

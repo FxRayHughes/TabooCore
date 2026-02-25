@@ -9,7 +9,7 @@ import net.minecraft.world.entity.EntityDimensions
 import net.minecraft.world.entity.LivingEntity
 import net.minecraft.world.phys.AABB
 import net.minecraft.world.phys.Vec3
-import taboocore.player.Player
+import taboocore.player.TabooCorePlayer
 import java.util.function.Predicate
 
 /**
@@ -76,8 +76,8 @@ object EntityUtils {
      * @return Player 代理对象
      */
     @JvmStatic
-    fun ServerPlayer.toPlayer(): Player {
-        return Player.of(this)
+    fun ServerPlayer.toPlayer(): TabooCorePlayer {
+        return TabooCorePlayer.of(this)
     }
 
     // ========================= 生命与伤害 =========================

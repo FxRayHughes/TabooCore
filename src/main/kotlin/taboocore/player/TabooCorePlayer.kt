@@ -26,15 +26,15 @@ import java.util.concurrent.ConcurrentHashMap
  * 高版本 MC 不混淆，直接调用 NMS API
  * 部分 private/protected 字段通过反射访问
  */
-class Player(val handle: ServerPlayer) : ProxyPlayer {
+class TabooCorePlayer(val handle: ServerPlayer) : ProxyPlayer {
 
     companion object {
 
-        private val cache = ConcurrentHashMap<UUID, Player>()
+        private val cache = ConcurrentHashMap<UUID, TabooCorePlayer>()
 
         /** 获取或创建缓存的 ProxyPlayer */
-        fun of(player: ServerPlayer): Player {
-            return cache.computeIfAbsent(player.uuid) { Player(player) }
+        fun of(player: ServerPlayer): TabooCorePlayer {
+            return cache.computeIfAbsent(player.uuid) { TabooCorePlayer(player) }
         }
 
         /** 玩家退出时移除缓存 */

@@ -6,7 +6,7 @@ import net.minecraft.server.level.ServerLevel
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.level.block.state.BlockState
-import taboocore.player.Player
+import taboocore.player.TabooCorePlayer
 import taboolib.common.event.CancelableInternalEvent
 import taboolib.common.event.InternalEvent
 
@@ -27,7 +27,7 @@ class BlockDamageEvent {
      * @property instaBreak 是否瞬间破坏（可修改，设为 true 可强制瞬间破坏）
      */
     class Pre(
-        val player: Player,
+        val player: TabooCorePlayer,
         val level: ServerLevel,
         val pos: BlockPos,
         val block: BlockState,
@@ -48,7 +48,7 @@ class BlockDamageEvent {
      * @property instaBreak 是否瞬间破坏（创造模式）
      */
     class Post(
-        val player: Player,
+        val player: TabooCorePlayer,
         val level: ServerLevel,
         val pos: BlockPos,
         val block: BlockState,
@@ -70,7 +70,7 @@ class BlockDamageEvent {
             itemInHand: ItemStack,
             instaBreak: Boolean
         ): Pre? {
-            val event = Pre(Player.of(serverPlayer), level, pos, block, face, itemInHand, instaBreak)
+            val event = Pre(TabooCorePlayer.of(serverPlayer), level, pos, block, face, itemInHand, instaBreak)
             event.call()
             return if (event.isCancelled) null else event
         }
@@ -87,7 +87,7 @@ class BlockDamageEvent {
             itemInHand: ItemStack,
             instaBreak: Boolean
         ) {
-            Post(Player.of(serverPlayer), level, pos, block, face, itemInHand, instaBreak).call()
+            Post(TabooCorePlayer.of(serverPlayer), level, pos, block, face, itemInHand, instaBreak).call()
         }
     }
 }

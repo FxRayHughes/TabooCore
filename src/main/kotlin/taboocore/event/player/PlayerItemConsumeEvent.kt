@@ -2,7 +2,7 @@ package taboocore.event.player
 
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.item.ItemStack
-import taboocore.player.Player
+import taboocore.player.TabooCorePlayer
 import taboolib.common.event.CancelableInternalEvent
 import taboolib.common.event.InternalEvent
 
@@ -18,7 +18,7 @@ class PlayerItemConsumeEvent {
      * @property item 被消耗的物品（消耗前的副本）
      */
     class Pre(
-        val player: Player,
+        val player: TabooCorePlayer,
         var item: ItemStack
     ) : CancelableInternalEvent()
 
@@ -29,7 +29,7 @@ class PlayerItemConsumeEvent {
      * @property item 被消耗的物品（消耗前的副本）
      */
     class Post(
-        val player: Player,
+        val player: TabooCorePlayer,
         val item: ItemStack
     ) : InternalEvent()
 
@@ -38,7 +38,7 @@ class PlayerItemConsumeEvent {
          * 玩家消耗物品前触发，返回事件对象，null 表示事件被取消
          */
         fun firePre(player: ServerPlayer, item: ItemStack): Pre? {
-            val event = Pre(Player.of(player), item)
+            val event = Pre(TabooCorePlayer.of(player), item)
             event.call()
             return if (event.isCancelled) null else event
         }
@@ -47,7 +47,7 @@ class PlayerItemConsumeEvent {
          * 玩家消耗物品后触发
          */
         fun firePost(player: ServerPlayer, item: ItemStack) {
-            Post(Player.of(player), item).call()
+            Post(TabooCorePlayer.of(player), item).call()
         }
     }
 }

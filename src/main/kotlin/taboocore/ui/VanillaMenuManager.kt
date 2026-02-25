@@ -1,7 +1,5 @@
 package taboocore.ui
 
-import net.minecraft.server.level.ServerPlayer
-import net.minecraft.world.inventory.ContainerInput
 import net.minecraft.world.item.ItemStack
 import taboocore.event.inventory.InventoryClickEvent
 import taboocore.event.inventory.InventoryCloseEvent

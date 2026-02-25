@@ -3,7 +3,7 @@ package taboocore.event.entity
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.damagesource.DamageSource
 import net.minecraft.world.entity.LivingEntity
-import taboocore.player.Player
+import taboocore.player.TabooCorePlayer
 import taboolib.common.event.CancelableInternalEvent
 import taboolib.common.event.InternalEvent
 
@@ -21,7 +21,7 @@ class EntityDeathEvent {
      */
     class Pre(
         val entity: LivingEntity,
-        val player: Player?,
+        val player: TabooCorePlayer?,
         val damageSource: DamageSource
     ) : CancelableInternalEvent()
 
@@ -34,7 +34,7 @@ class EntityDeathEvent {
      */
     class Post(
         val entity: LivingEntity,
-        val player: Player?,
+        val player: TabooCorePlayer?,
         val damageSource: DamageSource
     ) : InternalEvent()
 
@@ -43,7 +43,7 @@ class EntityDeathEvent {
          * 实体死亡前触发，返回 true 表示事件被取消
          */
         fun firePre(entity: LivingEntity, source: DamageSource): Boolean {
-            val player = if (entity is ServerPlayer) Player.of(entity) else null
+            val player = if (entity is ServerPlayer) TabooCorePlayer.of(entity) else null
             val event = Pre(entity, player, source)
             event.call()
             return event.isCancelled
@@ -53,7 +53,7 @@ class EntityDeathEvent {
          * 实体死亡后触发
          */
         fun firePost(entity: LivingEntity, source: DamageSource) {
-            val player = if (entity is ServerPlayer) Player.of(entity) else null
+            val player = if (entity is ServerPlayer) TabooCorePlayer.of(entity) else null
             Post(entity, player, source).call()
         }
     }

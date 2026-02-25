@@ -4,7 +4,7 @@ import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.InteractionHand
 import net.minecraft.world.entity.LivingEntity
 import net.minecraft.world.item.ItemStack
-import taboocore.player.Player
+import taboocore.player.TabooCorePlayer
 import taboolib.common.event.CancelableInternalEvent
 import taboolib.common.event.InternalEvent
 
@@ -22,7 +22,7 @@ class PlayerShearEntityEvent {
      * @property item 使用的剪刀物品
      */
     class Pre(
-        val player: Player,
+        val player: TabooCorePlayer,
         val entity: LivingEntity,
         val hand: InteractionHand,
         val item: ItemStack
@@ -37,7 +37,7 @@ class PlayerShearEntityEvent {
      * @property item 使用的剪刀物品
      */
     class Post(
-        val player: Player,
+        val player: TabooCorePlayer,
         val entity: LivingEntity,
         val hand: InteractionHand,
         val item: ItemStack
@@ -48,7 +48,7 @@ class PlayerShearEntityEvent {
          * 玩家剪切实体前触发，返回 true 表示事件被取消
          */
         fun firePre(player: ServerPlayer, entity: LivingEntity, hand: InteractionHand, item: ItemStack): Boolean {
-            val event = Pre(Player.of(player), entity, hand, item)
+            val event = Pre(TabooCorePlayer.of(player), entity, hand, item)
             event.call()
             return event.isCancelled
         }
@@ -57,7 +57,7 @@ class PlayerShearEntityEvent {
          * 玩家剪切实体后触发
          */
         fun firePost(player: ServerPlayer, entity: LivingEntity, hand: InteractionHand, item: ItemStack) {
-            Post(Player.of(player), entity, hand, item).call()
+            Post(TabooCorePlayer.of(player), entity, hand, item).call()
         }
     }
 }

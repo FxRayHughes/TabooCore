@@ -2,7 +2,7 @@ package taboocore.event.player
 
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.InteractionHand
-import taboocore.player.Player
+import taboocore.player.TabooCorePlayer
 import taboolib.common.event.CancelableInternalEvent
 import taboolib.common.event.InternalEvent
 
@@ -27,7 +27,7 @@ class PlayerAnimationEvent {
      * @property hand 使用的手
      */
     class Pre(
-        val player: Player,
+        val player: TabooCorePlayer,
         val animationType: AnimationType,
         val hand: InteractionHand
     ) : CancelableInternalEvent()
@@ -40,7 +40,7 @@ class PlayerAnimationEvent {
      * @property hand 使用的手
      */
     class Post(
-        val player: Player,
+        val player: TabooCorePlayer,
         val animationType: AnimationType,
         val hand: InteractionHand
     ) : InternalEvent()
@@ -50,7 +50,7 @@ class PlayerAnimationEvent {
          * 玩家挥手动画前触发，返回 true 表示事件被取消
          */
         fun firePre(player: ServerPlayer, hand: InteractionHand): Boolean {
-            val event = Pre(Player.of(player), AnimationType.ARM_SWING, hand)
+            val event = Pre(TabooCorePlayer.of(player), AnimationType.ARM_SWING, hand)
             event.call()
             return event.isCancelled
         }
@@ -59,7 +59,7 @@ class PlayerAnimationEvent {
          * 玩家挥手动画后触发
          */
         fun firePost(player: ServerPlayer, hand: InteractionHand) {
-            Post(Player.of(player), AnimationType.ARM_SWING, hand).call()
+            Post(TabooCorePlayer.of(player), AnimationType.ARM_SWING, hand).call()
         }
     }
 }

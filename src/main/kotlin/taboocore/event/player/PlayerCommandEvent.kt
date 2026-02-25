@@ -1,7 +1,7 @@
 package taboocore.event.player
 
 import net.minecraft.server.level.ServerPlayer
-import taboocore.player.Player
+import taboocore.player.TabooCorePlayer
 import taboolib.common.event.CancelableInternalEvent
 import taboolib.common.event.InternalEvent
 
@@ -17,7 +17,7 @@ class PlayerCommandEvent {
      * @property command 命令字符串
      */
     class Pre(
-        val player: Player,
+        val player: TabooCorePlayer,
         val command: String
     ) : CancelableInternalEvent()
 
@@ -28,7 +28,7 @@ class PlayerCommandEvent {
      * @property command 命令字符串
      */
     class Post(
-        val player: Player,
+        val player: TabooCorePlayer,
         val command: String
     ) : InternalEvent()
 
@@ -37,7 +37,7 @@ class PlayerCommandEvent {
          * 玩家执行命令前触发，返回 true 表示事件被取消
          */
         fun firePre(player: ServerPlayer, command: String): Boolean {
-            val event = Pre(Player.of(player), command)
+            val event = Pre(TabooCorePlayer.of(player), command)
             event.call()
             return event.isCancelled
         }
@@ -46,7 +46,7 @@ class PlayerCommandEvent {
          * 玩家执行命令后触发
          */
         fun firePost(player: ServerPlayer, command: String) {
-            Post(Player.of(player), command).call()
+            Post(TabooCorePlayer.of(player), command).call()
         }
     }
 }

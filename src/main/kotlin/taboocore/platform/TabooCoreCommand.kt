@@ -122,7 +122,7 @@ class TabooCoreCommand : PlatformCommand {
     /**
      * 将命令源包装为 [ProxyCommandSender]
      *
-     * 如果命令源的实体是 ServerPlayer，则返回对应的 [taboocore.player.Player]，
+     * 如果命令源的实体是 ServerPlayer，则返回对应的 [taboocore.player.TabooCorePlayer]，
      * 否则返回 [TabooCoreCommandSender]（控制台等）。
      *
      * @param source 原版命令源
@@ -131,7 +131,7 @@ class TabooCoreCommand : PlatformCommand {
     private fun wrapSender(source: CommandSourceStack): ProxyCommandSender {
         val player = source.player
         return if (player != null) {
-            taboocore.player.Player.of(player)
+            taboocore.player.TabooCorePlayer.of(player)
         } else {
             TabooCoreCommandSender(source)
         }

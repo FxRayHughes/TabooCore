@@ -2,7 +2,7 @@ package taboocore.event.player
 
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.item.ItemStack
-import taboocore.player.Player
+import taboocore.player.TabooCorePlayer
 import taboolib.common.event.CancelableInternalEvent
 import taboolib.common.event.InternalEvent
 
@@ -36,7 +36,7 @@ class PlayerEatEvent {
      * @property eatType 操作类型（EAT 或 DRINK）
      */
     class Pre(
-        val player: Player,
+        val player: TabooCorePlayer,
         var item: ItemStack,
         val eatType: EatType
     ) : CancelableInternalEvent()
@@ -49,7 +49,7 @@ class PlayerEatEvent {
      * @property eatType 操作类型（EAT 或 DRINK）
      */
     class Post(
-        val player: Player,
+        val player: TabooCorePlayer,
         val item: ItemStack,
         val eatType: EatType
     ) : InternalEvent()
@@ -59,7 +59,7 @@ class PlayerEatEvent {
          * 玩家吃/喝前触发，返回事件对象，null 表示事件被取消
          */
         fun firePre(player: ServerPlayer, item: ItemStack, eatType: EatType): Pre? {
-            val event = Pre(Player.of(player), item, eatType)
+            val event = Pre(TabooCorePlayer.of(player), item, eatType)
             event.call()
             return if (event.isCancelled) null else event
         }
@@ -68,7 +68,7 @@ class PlayerEatEvent {
          * 玩家吃/喝后触发
          */
         fun firePost(player: ServerPlayer, item: ItemStack, eatType: EatType) {
-            Post(Player.of(player), item, eatType).call()
+            Post(TabooCorePlayer.of(player), item, eatType).call()
         }
     }
 }

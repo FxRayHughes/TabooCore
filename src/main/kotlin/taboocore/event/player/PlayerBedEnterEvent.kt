@@ -3,7 +3,7 @@ package taboocore.event.player
 import net.minecraft.core.BlockPos
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.level.block.state.BlockState
-import taboocore.player.Player
+import taboocore.player.TabooCorePlayer
 import taboolib.common.event.CancelableInternalEvent
 import taboolib.common.event.InternalEvent
 
@@ -20,7 +20,7 @@ class PlayerBedEnterEvent {
      * @property bedPos 床的位置
      */
     class Pre(
-        val player: Player,
+        val player: TabooCorePlayer,
         val bed: BlockState,
         val bedPos: BlockPos
     ) : CancelableInternalEvent()
@@ -33,7 +33,7 @@ class PlayerBedEnterEvent {
      * @property bedPos 床的位置
      */
     class Post(
-        val player: Player,
+        val player: TabooCorePlayer,
         val bed: BlockState,
         val bedPos: BlockPos
     ) : InternalEvent()
@@ -43,7 +43,7 @@ class PlayerBedEnterEvent {
          * 玩家上床前触发，返回事件对象，null 表示事件被取消
          */
         fun firePre(player: ServerPlayer, bed: BlockState, bedPos: BlockPos): Pre? {
-            val event = Pre(Player.of(player), bed, bedPos)
+            val event = Pre(TabooCorePlayer.of(player), bed, bedPos)
             event.call()
             return if (event.isCancelled) null else event
         }
@@ -52,7 +52,7 @@ class PlayerBedEnterEvent {
          * 玩家上床后触发
          */
         fun firePost(player: ServerPlayer, bed: BlockState, bedPos: BlockPos) {
-            Post(Player.of(player), bed, bedPos).call()
+            Post(TabooCorePlayer.of(player), bed, bedPos).call()
         }
     }
 }

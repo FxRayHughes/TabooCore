@@ -2,7 +2,7 @@ package taboocore.event.player
 
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.entity.projectile.FishingHook
-import taboocore.player.Player
+import taboocore.player.TabooCorePlayer
 import taboolib.common.event.CancelableInternalEvent
 import taboolib.common.event.InternalEvent
 
@@ -35,7 +35,7 @@ class PlayerFishEvent {
      * @property state 钓鱼状态
      */
     class Pre(
-        val player: Player,
+        val player: TabooCorePlayer,
         val hook: FishingHook,
         val state: State
     ) : CancelableInternalEvent()
@@ -48,7 +48,7 @@ class PlayerFishEvent {
      * @property state 钓鱼状态
      */
     class Post(
-        val player: Player,
+        val player: TabooCorePlayer,
         val hook: FishingHook,
         val state: State
     ) : InternalEvent()
@@ -58,7 +58,7 @@ class PlayerFishEvent {
          * 玩家钓鱼前触发，返回 true 表示事件被取消
          */
         fun firePre(player: ServerPlayer, hook: FishingHook, state: State): Boolean {
-            val event = Pre(Player.of(player), hook, state)
+            val event = Pre(TabooCorePlayer.of(player), hook, state)
             event.call()
             return event.isCancelled
         }
@@ -67,7 +67,7 @@ class PlayerFishEvent {
          * 玩家钓鱼后触发
          */
         fun firePost(player: ServerPlayer, hook: FishingHook, state: State) {
-            Post(Player.of(player), hook, state).call()
+            Post(TabooCorePlayer.of(player), hook, state).call()
         }
     }
 }

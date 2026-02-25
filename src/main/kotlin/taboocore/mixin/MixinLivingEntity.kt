@@ -245,15 +245,16 @@ abstract class MixinLivingEntity {
 
         // 2. 吃/喝专用事件（仅限 EAT/DRINK 动画）
         val eatType = resolveEatType(useItem) ?: return
-        val eatEvent = PlayerEatEvent.firePre(self, consumeEvent.item.copy(), eatType)
+        val eatInput = consumeEvent.item.copy()
+        val eatEvent = PlayerEatEvent.firePre(self, eatInput, eatType)
         if (eatEvent == null) {
             ci.cancel()
             return
         }
         eatItemCopy = eatEvent.item
         cachedEatType = eatType
-        // 如果 eat 事件再次替换物品，也同步到 useItem
-        if (eatEvent.item !== consumeEvent.item) {
+        // 如果 eat 事件处理器替换了物品，同步到 useItem
+        if (eatEvent.item !== eatInput) {
             useItem = eatEvent.item
             consumeItemCopy = eatEvent.item
         }

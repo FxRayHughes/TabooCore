@@ -2,7 +2,7 @@ package taboocore.event.player
 
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.level.GameType
-import taboocore.player.Player
+import taboocore.player.TabooCorePlayer
 import taboolib.common.event.CancelableInternalEvent
 import taboolib.common.event.InternalEvent
 
@@ -19,7 +19,7 @@ class PlayerGameModeChangeEvent {
      * @property newGameMode 变更后的游戏模式
      */
     class Pre(
-        val player: Player,
+        val player: TabooCorePlayer,
         val oldGameMode: GameType,
         val newGameMode: GameType
     ) : CancelableInternalEvent()
@@ -32,7 +32,7 @@ class PlayerGameModeChangeEvent {
      * @property newGameMode 变更后的游戏模式
      */
     class Post(
-        val player: Player,
+        val player: TabooCorePlayer,
         val oldGameMode: GameType,
         val newGameMode: GameType
     ) : InternalEvent()
@@ -42,7 +42,7 @@ class PlayerGameModeChangeEvent {
          * 玩家游戏模式变更前触发，返回 true 表示事件被取消
          */
         fun firePre(player: ServerPlayer, oldMode: GameType, newMode: GameType): Boolean {
-            val event = Pre(Player.of(player), oldMode, newMode)
+            val event = Pre(TabooCorePlayer.of(player), oldMode, newMode)
             event.call()
             return event.isCancelled
         }
@@ -51,7 +51,7 @@ class PlayerGameModeChangeEvent {
          * 玩家游戏模式变更后触发
          */
         fun firePost(player: ServerPlayer, oldMode: GameType, newMode: GameType) {
-            Post(Player.of(player), oldMode, newMode).call()
+            Post(TabooCorePlayer.of(player), oldMode, newMode).call()
         }
     }
 }

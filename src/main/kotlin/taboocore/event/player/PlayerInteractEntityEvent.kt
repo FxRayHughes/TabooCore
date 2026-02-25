@@ -3,7 +3,7 @@ package taboocore.event.player
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.InteractionHand
 import net.minecraft.world.entity.Entity
-import taboocore.player.Player
+import taboocore.player.TabooCorePlayer
 import taboolib.common.event.CancelableInternalEvent
 import taboolib.common.event.InternalEvent
 
@@ -20,7 +20,7 @@ class PlayerInteractEntityEvent {
      * @property hand 使用的手（可能为 null，表示未指定）
      */
     class Pre(
-        val player: Player,
+        val player: TabooCorePlayer,
         val entity: Entity,
         val hand: InteractionHand?
     ) : CancelableInternalEvent()
@@ -33,7 +33,7 @@ class PlayerInteractEntityEvent {
      * @property hand 使用的手（可能为 null，表示未指定）
      */
     class Post(
-        val player: Player,
+        val player: TabooCorePlayer,
         val entity: Entity,
         val hand: InteractionHand?
     ) : InternalEvent()
@@ -43,7 +43,7 @@ class PlayerInteractEntityEvent {
          * 玩家与实体交互前触发，返回事件对象，null 表示事件被取消
          */
         fun firePre(player: ServerPlayer, entity: Entity, hand: InteractionHand?): Pre? {
-            val event = Pre(Player.of(player), entity, hand)
+            val event = Pre(TabooCorePlayer.of(player), entity, hand)
             event.call()
             return if (event.isCancelled) null else event
         }
@@ -52,7 +52,7 @@ class PlayerInteractEntityEvent {
          * 玩家与实体交互后触发
          */
         fun firePost(player: ServerPlayer, entity: Entity, hand: InteractionHand?) {
-            Post(Player.of(player), entity, hand).call()
+            Post(TabooCorePlayer.of(player), entity, hand).call()
         }
     }
 }

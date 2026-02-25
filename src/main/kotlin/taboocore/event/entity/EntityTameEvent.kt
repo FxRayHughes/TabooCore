@@ -3,7 +3,7 @@ package taboocore.event.entity
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.entity.TamableAnimal
 import net.minecraft.world.entity.player.Player as NmsPlayer
-import taboocore.player.Player
+import taboocore.player.TabooCorePlayer
 import taboolib.common.event.CancelableInternalEvent
 import taboolib.common.event.InternalEvent
 
@@ -22,7 +22,7 @@ class EntityTameEvent {
     class Pre(
         val entity: TamableAnimal,
         val owner: NmsPlayer,
-        val player: Player?
+        val player: TabooCorePlayer?
     ) : CancelableInternalEvent()
 
     /**
@@ -35,7 +35,7 @@ class EntityTameEvent {
     class Post(
         val entity: TamableAnimal,
         val owner: NmsPlayer,
-        val player: Player?
+        val player: TabooCorePlayer?
     ) : InternalEvent()
 
     companion object {
@@ -43,7 +43,7 @@ class EntityTameEvent {
          * 实体驯服前触发，返回 null 表示事件被取消
          */
         fun firePre(entity: TamableAnimal, owner: NmsPlayer): Pre? {
-            val player = if (owner is ServerPlayer) Player.of(owner) else null
+            val player = if (owner is ServerPlayer) TabooCorePlayer.of(owner) else null
             val event = Pre(entity, owner, player)
             event.call()
             return if (event.isCancelled) null else event
@@ -53,7 +53,7 @@ class EntityTameEvent {
          * 实体驯服后触发
          */
         fun firePost(entity: TamableAnimal, owner: NmsPlayer) {
-            val player = if (owner is ServerPlayer) Player.of(owner) else null
+            val player = if (owner is ServerPlayer) TabooCorePlayer.of(owner) else null
             Post(entity, owner, player).call()
         }
     }

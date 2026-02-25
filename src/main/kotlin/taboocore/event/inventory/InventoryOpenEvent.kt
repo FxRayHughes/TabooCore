@@ -2,7 +2,7 @@ package taboocore.event.inventory
 
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.inventory.AbstractContainerMenu
-import taboocore.player.Player
+import taboocore.player.TabooCorePlayer
 import taboolib.common.event.CancelableInternalEvent
 import taboolib.common.event.InternalEvent
 
@@ -18,7 +18,7 @@ class InventoryOpenEvent {
      * @property container 将要打开的容器菜单
      */
     class Pre(
-        val player: Player,
+        val player: TabooCorePlayer,
         val container: AbstractContainerMenu
     ) : CancelableInternalEvent()
 
@@ -29,7 +29,7 @@ class InventoryOpenEvent {
      * @property container 已打开的容器菜单
      */
     class Post(
-        val player: Player,
+        val player: TabooCorePlayer,
         val container: AbstractContainerMenu
     ) : InternalEvent()
 
@@ -38,7 +38,7 @@ class InventoryOpenEvent {
          * 玩家打开容器前触发，返回 true 表示事件被取消
          */
         fun firePre(player: ServerPlayer, container: AbstractContainerMenu): Boolean {
-            val event = Pre(Player.of(player), container)
+            val event = Pre(TabooCorePlayer.of(player), container)
             event.call()
             return event.isCancelled
         }
@@ -47,7 +47,7 @@ class InventoryOpenEvent {
          * 玩家打开容器后触发
          */
         fun firePost(player: ServerPlayer, container: AbstractContainerMenu) {
-            Post(Player.of(player), container).call()
+            Post(TabooCorePlayer.of(player), container).call()
         }
     }
 }

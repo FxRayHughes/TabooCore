@@ -6,7 +6,7 @@ import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.InteractionHand
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.level.block.state.BlockState
-import taboocore.player.Player
+import taboocore.player.TabooCorePlayer
 import taboolib.common.event.CancelableInternalEvent
 import taboolib.common.event.InternalEvent
 
@@ -49,7 +49,7 @@ class PlayerInteractEvent {
      * @property blockFace 点击的方块面（点击空气时为 null）
      */
     class Pre(
-        val player: Player,
+        val player: TabooCorePlayer,
         val action: Action,
         val item: ItemStack,
         val hand: InteractionHand?,
@@ -70,7 +70,7 @@ class PlayerInteractEvent {
      * @property blockFace 点击的方块面（点击空气时为 null）
      */
     class Post(
-        val player: Player,
+        val player: TabooCorePlayer,
         val action: Action,
         val item: ItemStack,
         val hand: InteractionHand?,
@@ -92,7 +92,7 @@ class PlayerInteractEvent {
             blockPos: BlockPos?,
             blockFace: Direction?
         ): Boolean {
-            val event = Pre(Player.of(player), action, item, hand, block, blockPos, blockFace)
+            val event = Pre(TabooCorePlayer.of(player), action, item, hand, block, blockPos, blockFace)
             event.call()
             return event.isCancelled
         }
@@ -109,7 +109,7 @@ class PlayerInteractEvent {
             blockPos: BlockPos?,
             blockFace: Direction?
         ) {
-            Post(Player.of(player), action, item, hand, block, blockPos, blockFace).call()
+            Post(TabooCorePlayer.of(player), action, item, hand, block, blockPos, blockFace).call()
         }
     }
 }

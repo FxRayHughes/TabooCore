@@ -4,7 +4,7 @@ import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.InteractionHand
 import net.minecraft.world.damagesource.DamageSource
 import net.minecraft.world.entity.LivingEntity
-import taboocore.player.Player
+import taboocore.player.TabooCorePlayer
 import taboolib.common.event.CancelableInternalEvent
 import taboolib.common.event.InternalEvent
 
@@ -23,7 +23,7 @@ class EntityResurrectEvent {
      */
     class Pre(
         val entity: LivingEntity,
-        val player: Player?,
+        val player: TabooCorePlayer?,
         val hand: InteractionHand?,
         val damageSource: DamageSource
     ) : CancelableInternalEvent()
@@ -38,7 +38,7 @@ class EntityResurrectEvent {
      */
     class Post(
         val entity: LivingEntity,
-        val player: Player?,
+        val player: TabooCorePlayer?,
         val hand: InteractionHand?,
         val damageSource: DamageSource
     ) : InternalEvent()
@@ -48,7 +48,7 @@ class EntityResurrectEvent {
          * 实体复活前触发，返回 null 表示事件被取消
          */
         fun firePre(entity: LivingEntity, hand: InteractionHand?, damageSource: DamageSource): Pre? {
-            val player = if (entity is ServerPlayer) Player.of(entity) else null
+            val player = if (entity is ServerPlayer) TabooCorePlayer.of(entity) else null
             val event = Pre(entity, player, hand, damageSource)
             event.call()
             return if (event.isCancelled) null else event
@@ -58,7 +58,7 @@ class EntityResurrectEvent {
          * 实体复活后触发
          */
         fun firePost(entity: LivingEntity, hand: InteractionHand?, damageSource: DamageSource) {
-            val player = if (entity is ServerPlayer) Player.of(entity) else null
+            val player = if (entity is ServerPlayer) TabooCorePlayer.of(entity) else null
             Post(entity, player, hand, damageSource).call()
         }
     }

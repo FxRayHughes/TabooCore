@@ -2,7 +2,7 @@ package taboocore.event.player
 
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.item.ItemStack
-import taboocore.player.Player
+import taboocore.player.TabooCorePlayer
 import taboolib.common.event.CancelableInternalEvent
 import taboolib.common.event.InternalEvent
 
@@ -19,7 +19,7 @@ class FoodLevelChangeEvent {
      * @property item 导致饥饿值变化的食物物品（可能为 null）
      */
     class Pre(
-        val player: Player,
+        val player: TabooCorePlayer,
         var foodLevel: Int,
         val item: ItemStack?
     ) : CancelableInternalEvent()
@@ -32,7 +32,7 @@ class FoodLevelChangeEvent {
      * @property item 导致饥饿值变化的食物物品（可能为 null）
      */
     class Post(
-        val player: Player,
+        val player: TabooCorePlayer,
         val foodLevel: Int,
         val item: ItemStack?
     ) : InternalEvent()
@@ -42,7 +42,7 @@ class FoodLevelChangeEvent {
          * 玩家饥饿值变化前触发，返回事件对象，null 表示事件被取消
          */
         fun firePre(player: ServerPlayer, foodLevel: Int, item: ItemStack?): Pre? {
-            val event = Pre(Player.of(player), foodLevel, item)
+            val event = Pre(TabooCorePlayer.of(player), foodLevel, item)
             event.call()
             return if (event.isCancelled) null else event
         }
@@ -51,7 +51,7 @@ class FoodLevelChangeEvent {
          * 玩家饥饿值变化后触发
          */
         fun firePost(player: ServerPlayer, foodLevel: Int, item: ItemStack?) {
-            Post(Player.of(player), foodLevel, item).call()
+            Post(TabooCorePlayer.of(player), foodLevel, item).call()
         }
     }
 }
