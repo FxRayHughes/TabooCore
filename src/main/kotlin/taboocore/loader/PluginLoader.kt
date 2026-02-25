@@ -5,6 +5,7 @@ import taboolib.common.event.InternalEvent
 import taboolib.common.event.InternalEventBus
 import taboolib.common.platform.Plugin
 import taboolib.common.platform.event.SubscribeEvent
+import taboocore.util.TabooCoreLogger
 import java.io.File
 import java.net.URL
 import java.net.URLClassLoader
@@ -43,8 +44,7 @@ object PluginLoader {
         // 依次加载并启用
         entries.forEach { (jar, meta) ->
             runCatching { load(jar, meta) }.onFailure { e ->
-                System.err.println("[TabooCore] Failed to load plugin: ${jar.name} - ${e.message}")
-                e.printStackTrace()
+                TabooCoreLogger.error("Failed to load plugin: ${jar.name} - ${e.message}", e)
             }
         }
     }
@@ -55,18 +55,19 @@ object PluginLoader {
         } else {
             sharedLoader!!
         }
-        // Scan all classes in plugin JAR and register @SubscribeEvent handlers
-        injectPluginClasses(jar, loader)
-        // Instantiate and start the plugin main class
+        // 扫描插件 JAR 中的所有类，注册 @SubscribeEvent 处理器（带禁用代理）
+        val proxies = mutableListOf<DisableProxy>()
+        injectPluginClasses(jar, loader, proxies)
+        // 实例化插件主类并触发生命周期
         val mainClass = loader.loadClass(meta.main)
         val constructor = mainClass.getDeclaredConstructor()
         constructor.isAccessible = true
         val plugin = constructor.newInstance() as Plugin
         plugin.onLoad()
         plugin.onEnable()
-        loaded += LoadedPlugin(meta, plugin, loader)
-        println(
-            "[TabooCore] Loaded plugin: ${meta.name} v${meta.version}" +
+        loaded += LoadedPlugin(meta, plugin, loader, proxies)
+        TabooCoreLogger.info(
+            "Loaded plugin: ${meta.name} v${meta.version}" +
                 if (meta.isolate) " (isolated)" else ""
         )
     }
@@ -74,11 +75,12 @@ object PluginLoader {
     /**
      * 扫描插件 JAR 中的所有 .class 文件，
      * 对每个有 @SubscribeEvent 且参数为 InternalEvent 子类的方法，
-     * 直接通过 InternalEventBus.listen() 注册监听器。
+     * 通过 [DisableProxy] 包装后注册到 InternalEventBus。
      *
-     * 绕过 EventBus/ClassVisitor/Reflex 链条，避免 findInstance/optional 等环节的静默失败。
+     * 使用代理的好处：重载时只需禁用代理，无需从 EventBus 移除（避免 API 兼容问题），
+     * 被禁用的代理在事件触发时静默跳过，不会双重执行。
      */
-    private fun injectPluginClasses(jar: File, loader: ClassLoader) {
+    private fun injectPluginClasses(jar: File, loader: ClassLoader, proxies: MutableList<DisableProxy>) {
         JarFile(jar).use { jf ->
             jf.stream()
                 .filter { it.name.endsWith(".class") && !it.name.contains('$') }
@@ -95,23 +97,28 @@ object PluginLoader {
                             if (!InternalEvent::class.java.isAssignableFrom(eventType)) continue
 
                             method.isAccessible = true
-                            @Suppress("UNCHECKED_CAST")
-                            InternalEventBus.listen(
-                                eventType as Class<InternalEvent>,
-                                anno.priority.level,
-                                anno.ignoreCancelled
-                            ) { event ->
+
+                            // 用 DisableProxy 包装，以便在插件卸载/重载时禁用
+                            val proxy = DisableProxy { event ->
                                 if (instance != null) {
                                     method.invoke(instance, event)
                                 } else {
                                     method.invoke(null, event)
                                 }
                             }
-                            println("[TabooCore]   @SubscribeEvent: ${clazz.simpleName}.${method.name}(${eventType.simpleName})")
+                            proxies += proxy
+
+                            @Suppress("UNCHECKED_CAST")
+                            InternalEventBus.listen(
+                                eventType as Class<InternalEvent>,
+                                anno.priority.level,
+                                anno.ignoreCancelled,
+                                proxy
+                            )
+                            TabooCoreLogger.info("  @SubscribeEvent: ${clazz.simpleName}.${method.name}(${eventType.simpleName})")
                         }
                     }.onFailure { e ->
-                        System.err.println("[TabooCore] Failed to inject class: $className - ${e.message}")
-                        e.printStackTrace()
+                        TabooCoreLogger.error("Failed to inject class: $className - ${e.message}", e)
                     }
                 }
         }
@@ -141,9 +148,26 @@ object PluginLoader {
     }
 
     fun disableAll() {
-        loaded.reversed().forEach { runCatching { it.plugin.onDisable() } }
+        loaded.reversed().forEach { lp ->
+            runCatching { lp.plugin.onDisable() }
+            // 禁用该插件注册的所有事件代理，防止重载后双重触发
+            lp.proxies.forEach { it.enabled = false }
+        }
         loaded.clear()
         sharedLoader = null
+    }
+
+    /**
+     * 重新加载所有插件。
+     *
+     * 流程：禁用所有插件 → 清理资源 → 重新扫描并加载。
+     * 已注册的 EventBus 监听器通过 [DisableProxy] 静默禁用，不会被双重执行。
+     */
+    fun reloadAll() {
+        TabooCoreLogger.info("开始重载所有插件...")
+        disableAll()
+        loadAll()
+        TabooCoreLogger.info("插件重载完成。")
     }
 
     private fun readMeta(jar: File): PluginMeta? = runCatching {
@@ -160,6 +184,21 @@ object PluginLoader {
 }
 
 /**
+ * 可禁用的事件监听器代理。
+ *
+ * 当插件卸载/重载时，将 [enabled] 置为 false，
+ * 此后事件触发时该代理静默跳过，不执行真实逻辑。
+ */
+class DisableProxy(private val delegate: (InternalEvent) -> Unit) : (InternalEvent) -> Unit {
+    @Volatile
+    var enabled = true
+
+    override fun invoke(event: InternalEvent) {
+        if (enabled) delegate(event)
+    }
+}
+
+/**
  * 共享 ClassLoader：持有多个插件 JAR 的 URL，所有非隔离插件共用同一个实例
  */
 private class SharedPluginClassLoader(
@@ -170,7 +209,8 @@ private class SharedPluginClassLoader(
 private data class LoadedPlugin(
     val meta: PluginMeta,
     val plugin: Plugin,
-    val loader: ClassLoader
+    val loader: ClassLoader,
+    val proxies: MutableList<DisableProxy> = mutableListOf()
 )
 
 /**

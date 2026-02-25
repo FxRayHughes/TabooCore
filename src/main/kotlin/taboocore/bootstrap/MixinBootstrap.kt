@@ -36,12 +36,12 @@ object MixinBootstrap {
                     val mixins = json.getAsJsonArray("mixins")
                     if (mixins != null && mixins.size() > 0) {
                         Mixins.addConfiguration(config, null as IMixinConfigSource?)
-                        println("[TabooCore] 注册 Mixin 配置: $config")
+                        println("注册 Mixin 配置: $config")
                     } else {
-                        println("[TabooCore] 跳过空 Mixin 配置: $config")
+                        println("跳过空 Mixin 配置: $config")
                     }
                 } else {
-                    System.err.println("[TabooCore] 未找到 Mixin 配置: $config")
+                    System.err.println("未找到 Mixin 配置: $config")
                 }
             }
         }
@@ -159,9 +159,9 @@ object MixinBootstrap {
                 putReference.invoke(unsafe, enumClass, o, null)
             }
 
-            println("[TabooCore] 已注入兼容级别: ${newEntries.joinToString { (it as Enum<*>).name }}")
+            println("已注入兼容级别: ${newEntries.joinToString { (it as Enum<*>).name }}")
         }.onFailure { e ->
-            System.err.println("[TabooCore] 注入 CompatibilityLevel 失败: ${e.message}")
+            System.err.println("注入 CompatibilityLevel 失败: ${e.message}")
             e.printStackTrace()
         }
     }

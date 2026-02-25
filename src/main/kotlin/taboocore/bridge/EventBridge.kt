@@ -6,8 +6,12 @@ import taboocore.player.Player
 import taboocore.event.PlayerJoinEvent
 import taboocore.event.PlayerQuitEvent
 import taboocore.event.ServerTickEvent
+import taboocore.console.TabooCoreConsole
+import taboocore.internal.InternalCommands
+import taboocore.internal.TpsTracker
 import taboocore.platform.TabooCoreExecutor
 import taboocore.util.ServerUtils
+import taboocore.util.TabooCoreLogger
 import taboolib.common.LifeCycle
 import taboolib.common.TabooLib
 
@@ -28,10 +32,16 @@ object EventBridge {
 
     /**
      * 服务器初始化完成后调用（initServer RETURN）
-     * 触发 ENABLE 生命周期，加载并启用插件
+     * 注册内置命令，触发 ENABLE 生命周期，加载并启用插件
      */
     fun fireServerStarted(server: MinecraftServer) {
+        TabooCoreLogger.markServerStarted()
         ServerUtils.serverInstance = server
+        // 注册内置管理命令（/tps、/perf、/tbreload）
+        InternalCommands.register(server)
+        // 注入 Brigadier 补全器和 JLine Log4j2 Appender
+        TabooCoreConsole.setupCompleter(server)
+        TabooCoreConsole.setupLog4j2Appender()
         // ENABLE: 插件可以监听事件
         TabooLib.lifeCycle(LifeCycle.ENABLE)
         taboocore.loader.PluginLoader.loadAll()
@@ -39,7 +49,7 @@ object EventBridge {
 
     /**
      * 每个 tick 调用（tickServer HEAD）
-     * 首次 tick 触发 ACTIVE 生命周期
+     * 首次 tick 触发 ACTIVE 生命周期；每 tick 记录 TPS
      */
     fun fireTick() {
         if (firstTick) {
@@ -48,6 +58,7 @@ object EventBridge {
             taboocore.loader.PluginLoader.activeAll()
             TabooLib.lifeCycle(LifeCycle.ACTIVE)
         }
+        TpsTracker.record()
         drainSyncQueue()
         ServerTickEvent(++tickCount).call()
     }
@@ -69,3 +80,4 @@ object EventBridge {
         }
     }
 }
+

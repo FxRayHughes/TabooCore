@@ -8,6 +8,7 @@ import net.minecraft.world.effect.MobEffect
 import net.minecraft.world.effect.MobEffectInstance
 import net.minecraft.world.entity.Entity
 import net.minecraft.world.entity.LivingEntity
+import net.minecraft.world.item.ItemUseAnimation
 import org.spongepowered.asm.mixin.Mixin
 import org.spongepowered.asm.mixin.Shadow
 import org.spongepowered.asm.mixin.Unique
@@ -21,6 +22,7 @@ import taboocore.event.entity.EntityKnockbackEvent
 import taboocore.event.entity.EntityPotionEffectEvent
 import taboocore.event.entity.EntityRegainHealthEvent
 import taboocore.event.entity.EntityResurrectEvent
+import taboocore.event.player.PlayerEatEvent
 import taboocore.event.player.PlayerItemConsumeEvent
 
 @Mixin(LivingEntity::class)
@@ -212,30 +214,80 @@ abstract class MixinLivingEntity {
         }
     }
 
-    // ============ PlayerItemConsumeEvent ============
+    // ============ PlayerItemConsumeEvent + PlayerEatEvent ============
 
     @Unique
     private var consumeItemCopy: net.minecraft.world.item.ItemStack? = null
+
+    @Unique
+    private var eatItemCopy: net.minecraft.world.item.ItemStack? = null
+
+    @Unique
+    private var cachedEatType: PlayerEatEvent.EatType? = null
 
     @Inject(method = ["completeUsingItem"], at = [At("HEAD")], cancellable = true)
     private fun onCompleteUsingItemPre(ci: CallbackInfo) {
         val self = this as LivingEntity
         if (self !is net.minecraft.server.level.ServerPlayer) return
         val item = useItem.copy()
-        val event = PlayerItemConsumeEvent.firePre(self, item)
-        if (event == null) {
+
+        // 1. 通用消耗事件
+        val consumeEvent = PlayerItemConsumeEvent.firePre(self, item)
+        if (consumeEvent == null) {
             ci.cancel()
             return
         }
-        consumeItemCopy = event.item
+        consumeItemCopy = consumeEvent.item
+        // 如果 item 被替换，同步到 useItem 使服务端使用新物品
+        if (consumeEvent.item !== item) {
+            useItem = consumeEvent.item
+        }
+
+        // 2. 吃/喝专用事件（仅限 EAT/DRINK 动画）
+        val eatType = resolveEatType(useItem) ?: return
+        val eatEvent = PlayerEatEvent.firePre(self, consumeEvent.item.copy(), eatType)
+        if (eatEvent == null) {
+            ci.cancel()
+            return
+        }
+        eatItemCopy = eatEvent.item
+        cachedEatType = eatType
+        // 如果 eat 事件再次替换物品，也同步到 useItem
+        if (eatEvent.item !== consumeEvent.item) {
+            useItem = eatEvent.item
+            consumeItemCopy = eatEvent.item
+        }
     }
 
     @Inject(method = ["completeUsingItem"], at = [At("RETURN")])
     private fun onCompleteUsingItemPost(ci: CallbackInfo) {
         val self = this as LivingEntity
         if (self !is net.minecraft.server.level.ServerPlayer) return
+
+        // 通用消耗事件后置
         val item = consumeItemCopy ?: return
         consumeItemCopy = null
         PlayerItemConsumeEvent.firePost(self, item)
+
+        // 吃/喝事件后置
+        val eatItem = eatItemCopy
+        val eatType = cachedEatType
+        eatItemCopy = null
+        cachedEatType = null
+        if (eatItem != null && eatType != null) {
+            PlayerEatEvent.firePost(self, eatItem, eatType)
+        }
+    }
+
+    /**
+     * 根据 ItemStack 的使用动画判断吃/喝类型，非食物/饮料返回 null
+     */
+    @Unique
+    private fun resolveEatType(item: net.minecraft.world.item.ItemStack): PlayerEatEvent.EatType? {
+        return when (item.useAnimation) {
+            ItemUseAnimation.EAT   -> PlayerEatEvent.EatType.EAT
+            ItemUseAnimation.DRINK -> PlayerEatEvent.EatType.DRINK
+            else -> null
+        }
     }
 }

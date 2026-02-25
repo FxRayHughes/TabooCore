@@ -42,7 +42,7 @@ class TabooCoreCommand : PlatformCommand {
         commandBuilder: CommandBase.() -> Unit
     ) {
         val server = ServerUtils.serverInstance ?: run {
-            System.err.println("[TabooCore] 服务器尚未初始化，命令 ${command.name} 注册失败")
+            System.err.println("服务器尚未初始化，命令 ${command.name} 注册失败")
             return
         }
         val dispatcher = server.commands.dispatcher

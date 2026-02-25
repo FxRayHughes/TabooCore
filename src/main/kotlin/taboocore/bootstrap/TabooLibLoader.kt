@@ -63,9 +63,9 @@ object TabooLibLoader {
             System.setProperty("taboolib.dev", "true")
         }
 
-        println("[TabooCore] 开始加载 TabooLib $tabooLibVersion（原生 Kotlin $kotlinVersion）")
+        println("开始加载 TabooLib $tabooLibVersion（原生 Kotlin $kotlinVersion）")
         if (devEnabled) {
-            println("[TabooCore] 本地调试模式已启用，本地仓库: $devLocalRepo")
+            println("本地调试模式已启用，本地仓库: $devLocalRepo")
         }
 
         // 1. 基础依赖：jar-relocator + asm（TabooLib 内部重定向工具链）
@@ -81,7 +81,7 @@ object TabooLibLoader {
         //    PlatformFactory.init()、RuntimeEnv.init() 等
         processExtraProperties()
 
-        println("[TabooCore] TabooLib loaded")
+        println("TabooLib loaded")
     }
 
     private fun loadBaseDeps() {
@@ -143,11 +143,11 @@ object TabooLibLoader {
                         val method = clazz.getDeclaredMethod(mainMethod)
                         method.isAccessible = true
                         method.invoke(null)
-                        println("[TabooCore] extra.properties -> $className.$mainMethod()")
+                        println("extra.properties -> $className.$mainMethod()")
                     }
                 }
             }.onFailure { e ->
-                System.err.println("[TabooCore] Failed to process extra.properties from ${jar.name}: ${e.message}")
+                System.err.println("Failed to process extra.properties from ${jar.name}: ${e.message}")
                 e.printStackTrace()
             }
         }
@@ -170,13 +170,13 @@ object TabooLibLoader {
         if (devEnabled) {
             val localJar = File(devLocalRepo, path)
             if (localJar.exists() && localJar.length() > 0) {
-                println("[TabooCore] 从本地仓库加载 $group:$artifact:$version")
+                println("从本地仓库加载 $group:$artifact:$version")
                 return localJar
             }
         }
 
         if (!validate(jar, sha)) {
-            println("[TabooCore] 正在下载 $group:$artifact:$version")
+            println("正在下载 $group:$artifact:$version")
             jar.parentFile.mkdirs()
             var lastError: Throwable? = null
             for (attempt in 1..3) {
@@ -188,16 +188,16 @@ object TabooLibLoader {
                 }.onFailure { e ->
                     lastError = e
                     if (attempt < 3) {
-                        System.err.println("[TabooCore] 下载失败（第 $attempt 次），重试中... $group:$artifact:$version - ${e.message}")
+                        System.err.println("下载失败（第 $attempt 次），重试中... $group:$artifact:$version - ${e.message}")
                     }
                 }
                 if (lastError == null) break
             }
             if (lastError != null) {
-                throw RuntimeException("[TabooCore] 下载失败 $group:$artifact:$version（已重试 3 次）", lastError)
+                throw RuntimeException("下载失败 $group:$artifact:$version（已重试 3 次）", lastError)
             }
             if (!validate(jar, sha)) {
-                throw RuntimeException("[TabooCore] 校验失败 $group:$artifact:$version，文件可能损坏")
+                throw RuntimeException("校验失败 $group:$artifact:$version，文件可能损坏")
             }
         }
 
@@ -246,7 +246,7 @@ object TabooLibLoader {
                 ?: error("Instrumentation 未初始化")
             TabooCoreAgent.loadedJars += jar
         }.onFailure { e ->
-            System.err.println("[TabooCore] 无法加载 ${jar.name}: ${e.message}")
+            System.err.println("无法加载 ${jar.name}: ${e.message}")
         }
     }
 

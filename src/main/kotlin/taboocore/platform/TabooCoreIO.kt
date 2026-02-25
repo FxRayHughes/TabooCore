@@ -1,5 +1,6 @@
 package taboocore.platform
 
+import taboocore.util.TabooCoreLogger
 import taboolib.common.Inject
 import taboolib.common.platform.Awake
 import taboolib.common.platform.Platform
@@ -12,12 +13,8 @@ import java.io.File
 @PlatformSide(Platform.TABOOCORE)
 class TabooCoreIO : PlatformIO {
 
-    override val pluginId: String
-        get() = "TabooCore"
-
-    override val pluginVersion: String
-        get() = "1.0.0"
-
+    override val pluginId: String get() = "TabooCore"
+    override val pluginVersion: String get() = "1.0.0"
     override val isPrimaryThread: Boolean
         get() = Thread.currentThread().name.startsWith("Server thread")
 
@@ -27,15 +24,15 @@ class TabooCoreIO : PlatformIO {
     }
 
     override fun info(vararg message: Any?) {
-        message.forEach { println("[TabooCore] $it") }
+        message.forEach { TabooCoreLogger.info(it.toString()) }
     }
 
     override fun severe(vararg message: Any?) {
-        message.forEach { System.err.println("[TabooCore] [ERROR] $it") }
+        message.forEach { TabooCoreLogger.error(it.toString()) }
     }
 
     override fun warning(vararg message: Any?) {
-        message.forEach { System.err.println("[TabooCore] [WARN] $it") }
+        message.forEach { TabooCoreLogger.warn(it.toString()) }
     }
 
     override fun releaseResourceFile(source: String, target: String, replace: Boolean): File {

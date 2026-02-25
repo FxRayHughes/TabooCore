@@ -2,6 +2,7 @@ package taboocore.agent
 
 import taboocore.bootstrap.MixinBootstrap
 import taboocore.bootstrap.TabooLibLoader
+import taboocore.console.TabooCoreConsole
 import taboolib.common.ClassAppender
 import taboolib.common.LifeCycle
 import taboolib.common.TabooLib
@@ -28,6 +29,13 @@ object TabooCoreAgent {
 
     @JvmStatic
     fun premain(args: String?, inst: Instrumentation) {
+        // 强制 stdout/stderr 使用 UTF-8，避免 Windows 控制台中文乱码
+        System.setProperty("stdout.encoding", "UTF-8")
+        System.setProperty("stderr.encoding", "UTF-8")
+
+        // 初始化 JLine 控制台（替换 System.in，必须在服务端创建控制台线程之前）
+        TabooCoreConsole.init()
+
         instrumentation = inst
         agentJarFile = File(TabooCoreAgent::class.java.protectionDomain.codeSource.location.toURI())
 
@@ -40,7 +48,7 @@ object TabooCoreAgent {
         //     必须在 CONST 生命周期之前完成注册。
         for (jar in loadedJars) {
             runCatching { ClassAppender.addPath(jar.toPath(), false, false) }.onFailure { e ->
-                System.err.println("[TabooCore] Failed to register ${jar.name} with ClassAppender: ${e.message}")
+                System.err.println("Failed to register ${jar.name} with ClassAppender: ${e.message}")
             }
         }
 
@@ -69,7 +77,7 @@ object TabooCoreAgent {
         // 7. LOAD 生命周期：Mixin 注入完成，服务器尚未启动
         TabooLib.lifeCycle(LifeCycle.LOAD)
 
-        println("[TabooCore] Agent 启动完成，插件数: ${plugins.size}")
+        println("Agent 启动完成，插件数: ${plugins.size}")
     }
 
     /**
@@ -91,7 +99,7 @@ object TabooCoreAgent {
             if (versionsList == null) {
                 // 非 bundler 格式，直接加入 classpath
                 inst.appendToSystemClassLoaderSearch(jarFile)
-                println("[TabooCore] server JAR added to classpath: ${serverJar.name}")
+                println("server JAR added to classpath: ${serverJar.name}")
                 return
             }
 
@@ -105,9 +113,9 @@ object TabooCoreAgent {
                 val extractedPath = File(workDir, "versions/${parts[2]}")
                 if (extractedPath.exists()) {
                     inst.appendToSystemClassLoaderSearch(JarFile(extractedPath))
-                    println("[TabooCore] server code JAR added to classpath: ${extractedPath.name}")
+                    println("server code JAR added to classpath: ${extractedPath.name}")
                 } else {
-                    System.err.println("[TabooCore] server code JAR not found: $extractedPath")
+                    System.err.println("server code JAR not found: $extractedPath")
                 }
             }
 
@@ -117,10 +125,10 @@ object TabooCoreAgent {
                 libDir.walkTopDown()
                     .filter { it.extension == "jar" }
                     .forEach { inst.appendToSystemClassLoaderSearch(JarFile(it)) }
-                println("[TabooCore] ${libDir.walkTopDown().count { it.extension == "jar" }} library JARs added to classpath")
+                println("${libDir.walkTopDown().count { it.extension == "jar" }} library JARs added to classpath")
             }
         } catch (e: Exception) {
-            System.err.println("[TabooCore] failed to load server JAR: ${e.message}")
+            System.err.println("failed to load server JAR: ${e.message}")
             e.printStackTrace()
         }
     }
@@ -161,11 +169,11 @@ object TabooCoreAgent {
             }
 
             if (total > 0) {
-                println("[TabooCore] ClassVisitors: $total visitors in ${pm.size} groups")
+                println("ClassVisitors: $total visitors in ${pm.size} groups")
                 return
             }
 
-            println("[TabooCore] WARNING: 0 ClassVisitors after CONST, registering manually")
+            println("WARNING: 0 ClassVisitors after CONST, registering manually")
             val cvClass = Class.forName("taboolib.common.inject.ClassVisitor")
             val registerMethod = cvh.getMethod("register", cvClass)
 
@@ -176,9 +184,9 @@ object TabooCoreAgent {
                 for (lc in LifeCycle.entries) {
                     registerMethod.invoke(null, cvaConstructor.newInstance(lc))
                 }
-                println("[TabooCore] Registered ClassVisitorAwake x${LifeCycle.entries.size}")
+                println("Registered ClassVisitorAwake x${LifeCycle.entries.size}")
             } catch (e: Throwable) {
-                System.err.println("[TabooCore] Failed to register ClassVisitorAwake: ${e.message}")
+                System.err.println("Failed to register ClassVisitorAwake: ${e.message}")
                 e.printStackTrace()
             }
 
@@ -187,13 +195,13 @@ object TabooCoreAgent {
                 val ebClass = Class.forName("taboolib.common.platform.event.EventBus")
                 val eb = ebClass.getDeclaredConstructor().newInstance()
                 registerMethod.invoke(null, eb)
-                println("[TabooCore] Registered EventBus")
+                println("Registered EventBus")
             } catch (e: Throwable) {
-                System.err.println("[TabooCore] Failed to register EventBus: ${e.message}")
+                System.err.println("Failed to register EventBus: ${e.message}")
                 e.printStackTrace()
             }
         } catch (e: Throwable) {
-            System.err.println("[TabooCore] ensureClassVisitors failed: ${e.message}")
+            System.err.println("ensureClassVisitors failed: ${e.message}")
             e.printStackTrace()
         }
     }

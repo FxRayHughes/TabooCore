@@ -24,6 +24,7 @@ dependencies {
     implementation("com.google.code.gson:gson:2.11.0")
     implementation("com.google.guava:guava:33.4.0-jre")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
+    implementation("org.jline:jline:3.30.6")
     implementation("org.ow2.asm:asm:9.8")
     implementation("org.ow2.asm:asm-util:9.8")
     implementation("org.ow2.asm:asm-commons:9.8")

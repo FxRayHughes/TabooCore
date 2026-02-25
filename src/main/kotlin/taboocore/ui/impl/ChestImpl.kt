@@ -345,7 +345,7 @@ open class ChestImpl(override var title: String) : Chest {
         runCatching {
             closeCallback(player, this)
         }.onFailure { ex ->
-            System.err.println("[TabooCore] 菜单关闭处理器异常: ${ex.message}")
+            System.err.println("菜单关闭处理器异常: ${ex.message}")
             ex.printStackTrace()
         }
     }

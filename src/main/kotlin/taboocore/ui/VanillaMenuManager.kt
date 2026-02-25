@@ -77,7 +77,7 @@ object VanillaMenuManager {
             runCatching {
                 chest.handleClick(clickEvent)
             }.onFailure { ex ->
-                System.err.println("[TabooCore] 菜单点击处理器异常: ${ex.message}")
+                System.err.println("菜单点击处理器异常: ${ex.message}")
                 ex.printStackTrace()
             }
 
@@ -107,7 +107,7 @@ object VanillaMenuManager {
             runCatching {
                 chest.handleClose(serverPlayer)
             }.onFailure { ex ->
-                System.err.println("[TabooCore] 菜单关闭处理器异常: ${ex.message}")
+                System.err.println("菜单关闭处理器异常: ${ex.message}")
                 ex.printStackTrace()
             }
         }
