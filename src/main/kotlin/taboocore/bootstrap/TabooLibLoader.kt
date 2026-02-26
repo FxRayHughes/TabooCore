@@ -1,11 +1,9 @@
 package taboocore.bootstrap
 
 import com.google.gson.Gson
-import com.google.gson.JsonObject
 import com.google.gson.annotations.SerializedName
 import taboocore.agent.TabooCoreAgent
 import java.io.File
-import java.io.InputStreamReader
 import java.net.URL
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
@@ -253,30 +251,16 @@ object TabooLibLoader {
     // ---- 配置加载 ----
 
     private fun loadConfig(): TabooCoreConfig {
-        // 1. 从 JAR 资源读取默认配置
-        val defaultJson = TabooLibLoader::class.java.getResourceAsStream("/taboocore.json")?.use { stream ->
-            InputStreamReader(stream, Charsets.UTF_8).use { gson.fromJson(it, JsonObject::class.java) }
-        } ?: JsonObject()
-
-        // 2. 从服务端根目录读取覆盖配置（字段级合并）
-        val overrideFile = File("taboocore.json")
-        if (overrideFile.exists()) {
-            val overrideJson = overrideFile.reader(Charsets.UTF_8).use { gson.fromJson(it, JsonObject::class.java) }
-            deepMerge(defaultJson, overrideJson)
-        }
-
-        return gson.fromJson(defaultJson, TabooCoreConfig::class.java)
-    }
-
-    /** 将 override 的字段递归合并到 base 中 */
-    private fun deepMerge(base: JsonObject, override: JsonObject) {
-        for ((key, value) in override.entrySet()) {
-            if (value.isJsonObject && base.has(key) && base[key].isJsonObject) {
-                deepMerge(base[key].asJsonObject, value.asJsonObject)
-            } else {
-                base.add(key, value)
+        // 如果根目录没有 taboocore.json，从 JAR 释放默认配置
+        val configFile = File("taboocore.json")
+        if (!configFile.exists()) {
+            TabooLibLoader::class.java.getResourceAsStream("/taboocore.json")?.use { stream ->
+                configFile.outputStream().use { out -> stream.copyTo(out) }
             }
         }
+
+        // 直接读取根目录配置，用户文件即最终配置
+        return configFile.reader(Charsets.UTF_8).use { gson.fromJson(it, TabooCoreConfig::class.java) }
     }
 
     // ---- 配置数据类 ----

@@ -3,6 +3,7 @@ package taboocore.agent
 import taboocore.bootstrap.MixinBootstrap
 import taboocore.bootstrap.TabooLibLoader
 import taboocore.console.TabooCoreConsole
+import taboocore.loader.BootstrapPhase
 import taboolib.common.ClassAppender
 import taboolib.common.LifeCycle
 import taboolib.common.TabooLib
@@ -76,6 +77,10 @@ object TabooCoreAgent {
 
         // 7. LOAD 生命周期：Mixin 注入完成，服务器尚未启动
         TabooLib.lifeCycle(LifeCycle.LOAD)
+
+        // 8. Bootstrap 阶段：在服务端 Registry 冻结前执行
+        //    允许插件注册附魔等需要在 freeze 前完成的内容
+        BootstrapPhase.execute(plugins)
 
         println("Agent 启动完成，插件数: ${plugins.size}")
     }

@@ -1,6 +1,6 @@
 {
   "taboolib": {
-    "version": "6.2.4-local-dev",
+    "version": "6.2.4-99fb800",
     "modules": [
       "common-reflex",
       "basic-configuration",
