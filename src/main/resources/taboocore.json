@@ -1,15 +1,11 @@
 {
   "taboolib": {
-    "version": "6.2.4-99fb800",
-    "modules": [
-      "common-reflex",
-      "basic-configuration",
-      "minecraft-command-helper"
-    ]
+    "version": "$taboolibVersion",
+    "modules": $modules
   },
   "kotlin": {
-    "version": "2.3.10",
-    "coroutines": "1.10.2"
+    "version": "$kotlinVersion",
+    "coroutines": "$coroutinesVersion"
   },
   "repo": {
     "central": "https://maven.aliyun.com/repository/central",
