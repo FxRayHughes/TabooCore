@@ -37,7 +37,10 @@
     "MixinSheep",
     "MixinPortalShape",
     "MixinFallingBlockEntity",
-    "MixinBucketItem"
+    "MixinBucketItem",
+    "MixinRecipeManager",
+    "MixinServerAdvancementManager",
+    "MixinEnchantments"
   ],
   "injectors": {
     "defaultRequire": 1
